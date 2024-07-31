@@ -9,6 +9,7 @@
 
 
 #define LVEC_NO_GAPS -1
+#define LVEC_NO_INDEXES_IN_VECTOR -1
 
 typedef struct lvec_element_header_t {
     bool occupied;
@@ -20,6 +21,7 @@ typedef struct lvec_t {
     uint32_t vector_capacity_element_count;
     uint32_t resize_quantity;
     int32_t  first_unoccupied_gap_index;
+    // int32_t  last_used_index;
     uint32_t vector_occupancy;
     uint8_t  data[ ];
 } lvec_t;
@@ -41,6 +43,7 @@ lvec_t* lvec_create(
     v->vector_capacity_element_count = vector_capacity_element_count;
     v->resize_quantity = resize_quantity;
     v->first_unoccupied_gap_index = LVEC_NO_GAPS;
+    v->last_used_index = LVEC_NO_INDEXES_IN_VECTOR;
     v->vector_occupancy = 0;
     return v;
 }
@@ -66,12 +69,10 @@ void* lvec_get_pointer_to_vacant_slot(lvec_t **v) {
 
             // mark the newly occupied slot as occupied
             ((lvec_element_header_t*) ptr)->occupied = true;
-            uint8_t *data = (uint8_t*) ptr;
-            uint32_t element_ix = (*v)->first_unoccupied_gap_index;
 
             // find the next unoccupied gap, or verify that there are no more gaps.
-            element_ix++;
-            data += (*v)->element_width;
+            uint8_t *data = ((uint8_t*) ptr) + (*v)->element_width;
+            uint32_t element_ix = (*v)->first_unoccupied_gap_index + 1;
             bool found_gap = false;
             while(element_ix < (*v)->vector_occupancy) {
                 if(((lvec_element_header_t*) data)->occupied == false) {

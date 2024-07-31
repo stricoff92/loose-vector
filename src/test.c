@@ -271,16 +271,163 @@ void test_an_expanded_vector_has_its_new_memory_region_filled_with_zeros() {
 
 void test_procurement_of_new_pointer_on_a_gapped_vector_results_in_the_index_of_the_first_gap() {
     TEST_STARTING;
+    float value = 123.45;
+    uint8_t *value_ptr = (uint8_t*) &value;
+
+    uint32_t elem_width = sizeof (elem_t);
+    uint32_t initial_element_capacity = 8;
+    uint32_t resize_quantity = 8;
+    int32_t initial_first_unoccupied_gap_index = LVEC_NO_GAPS;
+
+    lvec_t *v = lvec_create(elem_width, initial_element_capacity, resize_quantity);
+    assert(v != NULL);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    void *ptr1 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr1 != NULL);
+    ((elem_t*) ptr1)->a = value;
+    ((elem_t*) ptr1)->b = value;
+    void *ptr2 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr2 != NULL);
+    ((elem_t*) ptr2)->a = value;
+    ((elem_t*) ptr2)->b = value;
+    void *ptr3 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr3 != NULL);
+    ((elem_t*) ptr3)->a = value;
+    ((elem_t*) ptr3)->b = value;
+    void *ptr4 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr4 != NULL);
+    ((elem_t*) ptr4)->a = value;
+    ((elem_t*) ptr4)->b = value;
+
+    assert(v->vector_occupancy == 4);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    lvec_vacate_slot_at_index(v, 2);
+    assert(v->vector_occupancy == 3);
+    assert(v->first_unoccupied_gap_index == 2);
+
+    // slot 2 is vacated, now lets try to get a new pointer
+    void *ptr5 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr5 != NULL);
+    assert(ptr5 == v->data + elem_width * 2);
+    assert(((elem_t*) ptr5)->header.occupied);
+    assert(v->vector_occupancy == 4);
+
+    lvec_free(v);
     TEST_PASSED;
 }
 
 void test_get_new_pointer_to_first_gap_when_there_are_no_more_gaps_in_the_vector() {
     TEST_STARTING;
+    float value = 123.45;
+    uint8_t *value_ptr = (uint8_t*) &value;
+
+    uint32_t elem_width = sizeof (elem_t);
+    uint32_t initial_element_capacity = 8;
+    uint32_t resize_quantity = 8;
+    int32_t initial_first_unoccupied_gap_index = LVEC_NO_GAPS;
+
+    lvec_t *v = lvec_create(elem_width, initial_element_capacity, resize_quantity);
+    assert(v != NULL);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    void *ptr1 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr1 != NULL);
+    ((elem_t*) ptr1)->a = value;
+    ((elem_t*) ptr1)->b = value;
+    void *ptr2 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr2 != NULL);
+    ((elem_t*) ptr2)->a = value;
+    ((elem_t*) ptr2)->b = value;
+    void *ptr3 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr3 != NULL);
+    ((elem_t*) ptr3)->a = value;
+    ((elem_t*) ptr3)->b = value;
+    void *ptr4 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr4 != NULL);
+    ((elem_t*) ptr4)->a = value;
+    ((elem_t*) ptr4)->b = value;
+
+    assert(v->vector_occupancy == 4);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    lvec_vacate_slot_at_index(v, 2);
+    assert(v->vector_occupancy == 3);
+    assert(v->first_unoccupied_gap_index == 2);
+
+    // slot 2 is vacated, now lets get a new pointer to the first gap
+    void *ptr5 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr5 != NULL);
+    assert(ptr5 == v->data + elem_width * 2);
+    assert(v->vector_occupancy == 4);
+
+    // There are no more gaps in the vector, so the first_unoccupied_gap_index should be set to LVEC_NO_GAPS
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    lvec_free(v);
     TEST_PASSED;
 }
 
 void test_get_new_pointer_to_first_gap_when_there_are_more_gaps_in_the_vector() {
     TEST_STARTING;
+    float value = 123.45;
+    uint8_t *value_ptr = (uint8_t*) &value;
+
+    uint32_t elem_width = sizeof (elem_t);
+    uint32_t initial_element_capacity = 8;
+    uint32_t resize_quantity = 8;
+    int32_t initial_first_unoccupied_gap_index = LVEC_NO_GAPS;
+
+    lvec_t *v = lvec_create(elem_width, initial_element_capacity, resize_quantity);
+    assert(v != NULL);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    void *ptr1 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr1 != NULL);
+    ((elem_t*) ptr1)->a = value;
+    ((elem_t*) ptr1)->b = value;
+    void *ptr2 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr2 != NULL);
+    ((elem_t*) ptr2)->a = value;
+    ((elem_t*) ptr2)->b = value;
+    void *ptr3 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr3 != NULL);
+    ((elem_t*) ptr3)->a = value;
+    ((elem_t*) ptr3)->b = value;
+    void *ptr4 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr4 != NULL);
+    ((elem_t*) ptr4)->a = value;
+    ((elem_t*) ptr4)->b = value;
+
+    assert(v->vector_occupancy == 4);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    lvec_vacate_slot_at_index(v, 2);
+    assert(v->vector_occupancy == 3);
+    assert(v->first_unoccupied_gap_index == 2);
+    lvec_vacate_slot_at_index(v, 1);
+    assert(v->vector_occupancy == 2);
+    assert(v->first_unoccupied_gap_index == 1);
+
+    // slot 2 is vacated, now lets get a new pointer to the first gap (slot 1)
+    void *ptr5 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr5 != NULL);
+    assert(ptr5 == v->data + elem_width * 1);
+    // Vector now has 3 occupied slots, and the first gap is at index 2
+    assert(v->vector_occupancy == 3);
+    assert(v->first_unoccupied_gap_index == 2);
+
+    // request a new pointer, this time we should get a pointer to slot 2
+    void *ptr6 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr6 != NULL);
+    assert(ptr6 == v->data + elem_width * 2);
+
+    // Vector now has 4 occupied slots, and there are no more gaps
+    assert(v->vector_occupancy == 4);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    lvec_free(v);
     TEST_PASSED;
 }
 
