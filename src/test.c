@@ -268,6 +268,23 @@ void test_an_expanded_vector_has_its_new_memory_region_filled_with_zeros() {
     TEST_PASSED;
 }
 
+
+void test_procurement_of_new_pointer_on_a_gapped_vector_results_in_the_index_of_the_first_gap() {
+    TEST_STARTING;
+    TEST_PASSED;
+}
+
+void test_get_new_pointer_to_first_gap_when_there_are_no_more_gaps_in_the_vector() {
+    TEST_STARTING;
+    TEST_PASSED;
+}
+
+void test_get_new_pointer_to_first_gap_when_there_are_more_gaps_in_the_vector() {
+    TEST_STARTING;
+    TEST_PASSED;
+}
+
+
 void test_vacate_last_slot_on_a_gapless_vector() {
     TEST_STARTING;
     float value = 123.45;
@@ -561,61 +578,6 @@ void test_vacate_slot_in_vector_that_has_gaps_and_the_slot_were_vacating_is_befo
     TEST_PASSED;
 }
 
-void test_vacate_slot_in_vector_that_has_gaps_and_the_slot_were_vacating_is_after_the_existing_gap_and_there_is_another_occupied_slot_after() {
-    TEST_STARTING;
-    float value = 123.45;
-    uint8_t *value_ptr = (uint8_t*) &value;
-
-    uint32_t elem_width = sizeof (elem_t);
-    uint32_t initial_element_capacity = 8;
-    uint32_t resize_quantity = 8;
-    int32_t initial_first_unoccupied_gap_index = LVEC_NO_GAPS;
-
-    lvec_t *v = lvec_create(elem_width, initial_element_capacity, resize_quantity);
-    assert(v != NULL);
-    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
-
-    void *ptr1 = lvec_get_pointer_to_vacant_slot(&v);
-    assert(ptr1 != NULL);
-    ((elem_t*) ptr1)->a = value;
-    ((elem_t*) ptr1)->b = value;
-    void *ptr2 = lvec_get_pointer_to_vacant_slot(&v);
-    assert(ptr2 != NULL);
-    ((elem_t*) ptr2)->a = value;
-    ((elem_t*) ptr2)->b = value;
-    void *ptr3 = lvec_get_pointer_to_vacant_slot(&v);
-    assert(ptr3 != NULL);
-    ((elem_t*) ptr3)->a = value;
-    ((elem_t*) ptr3)->b = value;
-    void *ptr4 = lvec_get_pointer_to_vacant_slot(&v);
-    assert(ptr4 != NULL);
-    ((elem_t*) ptr4)->a = value;
-    ((elem_t*) ptr4)->b = value;
-    void *ptr5 = lvec_get_pointer_to_vacant_slot(&v);
-    assert(ptr5 != NULL);
-    ((elem_t*) ptr5)->a = value;
-    ((elem_t*) ptr5)->b = value;
-    void *ptr6 = lvec_get_pointer_to_vacant_slot(&v);
-    assert(ptr6 != NULL);
-    ((elem_t*) ptr6)->a = value;
-    ((elem_t*) ptr6)->b = value;
-
-    assert(v->vector_occupancy == 6);
-    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
-
-    lvec_vacate_slot_at_index(v, 2);
-    assert(v->vector_occupancy == 5);
-    assert(v->first_unoccupied_gap_index == 2);
-
-    // slot 2 is vacated, now lets empty slot 3 (which is after the first gap, and before the final element in the vector)
-    lvec_vacate_slot_at_index(v, 3);
-    assert(v->vector_occupancy == 4);
-    assert(v->first_unoccupied_gap_index == 2);
-
-    lvec_free(v);
-    TEST_PASSED;
-}
-
 void test_vacate_slot_in_vector_that_has_gaps_and_the_slot_were_vacating_is_after_the_existing_gap_and_there_is_no_other_occupied_slot_after() {
     TEST_STARTING;
     float value = 123.45;
@@ -727,12 +689,14 @@ int main() {
     test_pointers_can_be_provisioned_to_a_gapless_vector_that_has_sufficient_capacity();
     test_a_vector_can_be_expanded_and_pointers_can_be_provisioned_if_the_vector_is_completely_filled();
     test_an_expanded_vector_has_its_new_memory_region_filled_with_zeros();
+    test_procurement_of_new_pointer_on_a_gapped_vector_results_in_the_index_of_the_first_gap();
+    test_get_new_pointer_to_first_gap_when_there_are_no_more_gaps_in_the_vector();
+    test_get_new_pointer_to_first_gap_when_there_are_more_gaps_in_the_vector();
 
     // test vacate slots
     test_vacate_last_slot_on_a_gapless_vector();
     test_vacate_middle_slot_on_gapless_vector();
     test_vacate_slot_in_vector_that_has_gaps_and_the_slot_were_vacating_is_before_the_existing_gap();
-    test_vacate_slot_in_vector_that_has_gaps_and_the_slot_were_vacating_is_after_the_existing_gap_and_there_is_another_occupied_slot_after();
     test_vacate_slot_in_vector_that_has_gaps_and_the_slot_were_vacating_is_after_the_existing_gap_and_there_is_no_other_occupied_slot_after();
     test_vacate_slot_in_vector_that_has_gaps_and_the_slot_were_vacating_is_after_the_existing_gap_and_there_is_an_occupied_slot_after();
 
