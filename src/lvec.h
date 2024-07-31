@@ -53,13 +53,22 @@ void* lvec_get_pointer_to_vacant_slot(lvec_t **v) {
             (*v)->vector_occupancy++;
         } else {
             ptr = (*v)->data + ((*v)->element_width * (*v)->first_unoccupied_gap_index);
+            uint8_t *data_ix = (*v)->data + ((*v)->element_width * (*v)->first_unoccupied_gap_index);
+            ((lvec_element_header_t*) data_ix)->occupied = false;
 
+            data_ix += (*v)->element_width;
+            uint32_t next_gap_index = LVEC_NO_GAPS;
+            while(true) {
+
+            }
+            (*v)->first_unoccupied_gap_index = next_gap_index;
         }
         return ptr;
     } else {
         void *expanded = realloc(
             *v,
-            sizeof (lvec_t) + ((*v)->vector_capacity_element_count + (*v)->resize_quantity) * (*v)->element_width
+            sizeof (lvec_t)
+            + ((*v)->vector_capacity_element_count + (*v)->resize_quantity) * (*v)->element_width
         );
         if(expanded == NULL) return NULL;
         (*v) = (lvec_t*) expanded;
