@@ -114,8 +114,8 @@ void lvec_vacate_slot_at_index(lvec_t *v, uint32_t index) {
         v->element_width
     );
     if(index < (v->vector_occupancy - 1)) {
-        if(index < v->first_unoccupied_gap_index) {
-            v->first_unoccupied_gap_index = index;
+        if(((int32_t) index) < v->first_unoccupied_gap_index) {
+            v->first_unoccupied_gap_index = (int32_t) index;
         }
     }
     v->vector_occupancy--;

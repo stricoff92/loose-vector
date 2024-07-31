@@ -273,11 +273,16 @@ int main() {
     // sanity checks
     assert(sizeof (elem_t) == 12);
 
+    // test create vector
     test_lvec_can_be_created_with_initial_meta_data_properly_set();
     test_created_lvec_has_data_initialized_to_zeros();
+
+    // test provision slots to tightly packed vector
     test_pointers_can_be_provisioned_to_a_gapless_vector_that_has_sufficient_capacity();
     test_a_vector_can_be_expanded_and_pointers_can_be_provisioned_if_the_vector_is_completely_filled();
     test_an_expanded_vector_has_its_new_memory_region_filled_with_zeros();
+
+    // test vacate slots
 
     return 0;
 }
