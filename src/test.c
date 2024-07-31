@@ -268,6 +268,112 @@ void test_an_expanded_vector_has_its_new_memory_region_filled_with_zeros() {
     TEST_PASSED;
 }
 
+void test_vacate_last_slot_on_a_gapless_vector() {
+    TEST_STARTING;
+    float value = 123.45;
+    uint8_t *value_ptr = (uint8_t*) &value;
+
+    uint32_t elem_width = sizeof (elem_t);
+    uint32_t initial_element_capacity = 2;
+    uint32_t resize_quantity = 4;
+    int32_t initial_first_unoccupied_gap_index = LVEC_NO_GAPS;
+    uint8_t *elem_width_ptr = (uint8_t *) &elem_width;
+    uint8_t *initial_element_capacity_ptr = (uint8_t *) &initial_element_capacity;
+    uint8_t *resize_quantity_ptr = (uint8_t *) &resize_quantity;
+    uint8_t *initial_first_unoccupied_gap_index_ptr = (uint8_t *) &initial_first_unoccupied_gap_index;
+
+    lvec_t *v = lvec_create(elem_width, initial_element_capacity, resize_quantity);
+    assert(v != NULL);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    void *ptr1 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr1 != NULL);
+    ((elem_t*) ptr1)->a = value;
+    ((elem_t*) ptr1)->b = value;
+    void *ptr2 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr2 != NULL);
+    assert(v->vector_occupancy == 2);
+    assert(v->vector_capacity_element_count == 2);
+    ((elem_t*) ptr2)->a = value;
+    ((elem_t*) ptr2)->b = value;
+
+    {
+        uint32_t expected_vector_occupany = 2;
+        uint8_t *expected_vector_occupany_ptr = (uint8_t *) &expected_vector_occupany;
+        uint8_t expected_data[] = {
+            elem_width_ptr[0],
+            elem_width_ptr[1],
+            elem_width_ptr[2],
+            elem_width_ptr[3],
+            initial_element_capacity_ptr[0],
+            initial_element_capacity_ptr[1],
+            initial_element_capacity_ptr[2],
+            initial_element_capacity_ptr[3],
+            resize_quantity_ptr[0],
+            resize_quantity_ptr[1],
+            resize_quantity_ptr[2],
+            resize_quantity_ptr[3],
+            initial_first_unoccupied_gap_index_ptr[0],
+            initial_first_unoccupied_gap_index_ptr[1],
+            initial_first_unoccupied_gap_index_ptr[2],
+            initial_first_unoccupied_gap_index_ptr[3],
+            expected_vector_occupany_ptr[0],
+            expected_vector_occupany_ptr[1],
+            expected_vector_occupany_ptr[2],
+            expected_vector_occupany_ptr[3],
+            1, 0, 0, 0,                                             // data[0]->header->occupied
+            value_ptr[0], value_ptr[1], value_ptr[2], value_ptr[3], // data[0]->a
+            value_ptr[0], value_ptr[1], value_ptr[2], value_ptr[3], // data[0]->b
+            1, 0, 0, 0,                                             // data[1]->header->occupied
+            value_ptr[0], value_ptr[1], value_ptr[2], value_ptr[3], // data[1]->a
+            value_ptr[0], value_ptr[1], value_ptr[2], value_ptr[3], // data[1]->b
+        };
+        assert(sizeof (expected_data) == 44);
+        assert(memcmp(v, expected_data, sizeof (expected_data)) == 0);
+    }
+
+    lvec_vacate_slot_at_index(v, 1);
+    assert(v->vector_occupancy == 1);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+    {
+        uint32_t expected_vector_occupany = 1;
+        uint8_t *expected_vector_occupany_ptr = (uint8_t *) &expected_vector_occupany;
+        uint8_t expected_data[] = {
+            elem_width_ptr[0],
+            elem_width_ptr[1],
+            elem_width_ptr[2],
+            elem_width_ptr[3],
+            initial_element_capacity_ptr[0],
+            initial_element_capacity_ptr[1],
+            initial_element_capacity_ptr[2],
+            initial_element_capacity_ptr[3],
+            resize_quantity_ptr[0],
+            resize_quantity_ptr[1],
+            resize_quantity_ptr[2],
+            resize_quantity_ptr[3],
+            initial_first_unoccupied_gap_index_ptr[0],
+            initial_first_unoccupied_gap_index_ptr[1],
+            initial_first_unoccupied_gap_index_ptr[2],
+            initial_first_unoccupied_gap_index_ptr[3],
+            expected_vector_occupany_ptr[0],
+            expected_vector_occupany_ptr[1],
+            expected_vector_occupany_ptr[2],
+            expected_vector_occupany_ptr[3],
+            1, 0, 0, 0,                                             // data[0]->header->occupied
+            value_ptr[0], value_ptr[1], value_ptr[2], value_ptr[3], // data[0]->a
+            value_ptr[0], value_ptr[1], value_ptr[2], value_ptr[3], // data[0]->b
+            0, 0, 0, 0,                                             // data[1]->header->occupied
+            0, 0, 0, 0,                                             // data[1]->a
+            0, 0, 0, 0                                              // data[1]->b
+        };
+        assert(sizeof (expected_data) == 44);
+        assert(memcmp(v, expected_data, sizeof (expected_data)) == 0);
+    }
+
+    lvec_free(v);
+    TEST_PASSED;
+}
+
 int main() {
 
     // sanity checks
@@ -283,6 +389,7 @@ int main() {
     test_an_expanded_vector_has_its_new_memory_region_filled_with_zeros();
 
     // test vacate slots
+    test_vacate_last_slot_on_a_gapless_vector();
 
     return 0;
 }

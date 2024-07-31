@@ -113,11 +113,33 @@ void lvec_vacate_slot_at_index(lvec_t *v, uint32_t index) {
         0,
         v->element_width
     );
-    if(index < (v->vector_occupancy - 1)) {
-        if(((int32_t) index) < v->first_unoccupied_gap_index) {
-            v->first_unoccupied_gap_index = (int32_t) index;
+
+    if(v->first_unoccupied_gap_index == LVEC_NO_GAPS) {
+        if(index < (v->vector_occupancy - 1)) {
+            v->first_unoccupied_gap_index = index;
         }
     }
+    else {
+        if(index < v->first_unoccupied_gap_index) {
+            v->first_unoccupied_gap_index = index;
+        }
+        else {
+            bool any_elements_after_deleted_index = false;
+            for(
+                uint32_t element_ix = index + 1;
+                element_ix < v->vector_capacity_element_count;
+                element_ix++
+            ) {
+                if(((lvec_element_header_t*) (v->data + (element_ix * v->element_width)))->occupied) {
+                    any_elements_after_deleted_index = true;
+                    break;
+                }
+            }
+            if(!any_elements_after_deleted_index)
+                v->first_unoccupied_gap_index = LVEC_NO_GAPS;
+        }
+    }
+
     v->vector_occupancy--;
 }
 
