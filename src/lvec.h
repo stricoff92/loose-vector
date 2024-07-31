@@ -45,6 +45,10 @@ lvec_t* lvec_create(
     return v;
 }
 
+void lvec_free(lvec_t *v) {
+    free(v);
+}
+
 void* lvec_get_pointer_to_vacant_slot(lvec_t **v) {
     if((*v)->vector_occupancy < (*v)->vector_capacity_element_count) {
         void *ptr;
@@ -101,11 +105,22 @@ void* lvec_get_pointer_to_vacant_slot(lvec_t **v) {
 }
 
 void lvec_vacate_slot_at_index(lvec_t *v, uint32_t index) {
+    if(!v->vector_occupancy) return;
+    if(index >= v->vector_capacity_element_count) return; // Guard against out of bounds access
 
+    memset(
+        v->data + (index * v->element_width),
+        0,
+        v->element_width
+    );
+    if(index < (v->vector_occupancy - 1)) {
+        if(index < v->first_unoccupied_gap_index) {
+            v->first_unoccupied_gap_index = index;
+        }
+    }
+    v->vector_occupancy--;
 }
 
-void lvec_free(lvec_t *v) {
-    free(v);
-}
+
 
 #endif
