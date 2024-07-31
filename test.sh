@@ -9,6 +9,6 @@ mkdir -p build
 gcc src/test.c -o build/test
 ./build/test
 
-echo "✅ vec_t tests pass "
+echo "✅ lvec_t tests pass "
 
 
