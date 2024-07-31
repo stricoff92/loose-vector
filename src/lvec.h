@@ -25,7 +25,7 @@ typedef struct lvec_t {
 } lvec_t;
 
 
-lvec_t *lvec_create(
+lvec_t* lvec_create(
     uint32_t element_width,
     uint32_t vector_capacity_element_count,
     uint32_t resize_quantity
@@ -52,17 +52,34 @@ void* lvec_get_pointer_to_vacant_slot(lvec_t **v) {
             ptr = (*v)->data + ((*v)->element_width * (*v)->vector_occupancy);
             (*v)->vector_occupancy++;
         } else {
+            // return pointer to first unoccupied gap,
+            // identify next unoccupied gap, or mark vec as having no gaps.
+
+            // This is the pointer to the first unoccupied gap which will be returned.
             ptr = (*v)->data + ((*v)->element_width * (*v)->first_unoccupied_gap_index);
-            uint8_t *data_ix = (*v)->data + ((*v)->element_width * (*v)->first_unoccupied_gap_index);
-            ((lvec_element_header_t*) data_ix)->occupied = false;
+            (*v)->vector_occupancy++;
 
-            data_ix += (*v)->element_width;
-            uint32_t next_gap_index = LVEC_NO_GAPS;
-            while(true) {
+            // mark the newly occupied slot as occupied
+            uint8_t *data = (uint8_t*) ptr;
+            ((lvec_element_header_t*) data)->occupied = false;
+            uint32_t element_ix = (*v)->first_unoccupied_gap_index;
 
+            // find the next unoccupied gap, or verify that there are no more gaps.
+            element_ix++;
+            data += (*v)->element_width;
+            bool found_gap = false;
+            while(element_ix < (*v)->vector_occupancy) {
+                if(((lvec_element_header_t*) data)->occupied == false) {
+                    (*v)->first_unoccupied_gap_index = element_ix;
+                    found_gap = true;
+                    break;
+                }
+                element_ix++;
+                data += (*v)->element_width;
             }
-            (*v)->first_unoccupied_gap_index = next_gap_index;
+            if(!found_gap) (*v)->first_unoccupied_gap_index = LVEC_NO_GAPS;
         }
+
         return ptr;
     } else {
         void *expanded = realloc(
@@ -84,6 +101,10 @@ void* lvec_get_pointer_to_vacant_slot(lvec_t **v) {
 
 void lvec_vacate_slot_at_index(lvec_t *v, uint32_t index) {
 
+}
+
+void lvec_free(lvec_t *v) {
+    free(v);
 }
 
 #endif
