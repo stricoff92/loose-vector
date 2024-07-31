@@ -465,6 +465,255 @@ void test_vacate_middle_slot_on_gapless_vector() {
     TEST_PASSED;
 }
 
+void test_vacate_slot_in_vector_that_has_gaps_and_the_slot_were_vacating_is_before_the_existing_gap() {
+    TEST_STARTING;
+    float value = 123.45;
+    uint8_t *value_ptr = (uint8_t*) &value;
+
+    uint32_t elem_width = sizeof (elem_t);
+    uint32_t initial_element_capacity = 5;
+    uint32_t resize_quantity = 10;
+    int32_t initial_first_unoccupied_gap_index = LVEC_NO_GAPS;
+
+    lvec_t *v = lvec_create(elem_width, initial_element_capacity, resize_quantity);
+    assert(v != NULL);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    void *ptr1 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr1 != NULL);
+    ((elem_t*) ptr1)->a = value;
+    ((elem_t*) ptr1)->b = value;
+    void *ptr2 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr2 != NULL);
+    ((elem_t*) ptr2)->a = value;
+    ((elem_t*) ptr2)->b = value;
+    void *ptr3 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr3 != NULL);
+    ((elem_t*) ptr3)->a = value;
+    ((elem_t*) ptr3)->b = value;
+    void *ptr4 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr4 != NULL);
+    ((elem_t*) ptr4)->a = value;
+    ((elem_t*) ptr4)->b = value;
+
+    assert(v->vector_occupancy == 4);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    lvec_vacate_slot_at_index(v, 2);
+    assert(v->vector_occupancy == 3);
+    assert(v->first_unoccupied_gap_index == 2);
+
+
+    // slot 2 is vacated, now lets empty slot 1 (which is before the first gap)
+    lvec_vacate_slot_at_index(v, 1);
+    assert(v->vector_occupancy == 2);
+    assert(v->first_unoccupied_gap_index == 1);
+
+    {
+        uint32_t expected_vector_occupany = 2;
+        int32_t expected_first_unoccupied_gap_index = 1;
+        uint8_t *expected_vector_occupany_ptr = (uint8_t *) &expected_vector_occupany;
+        uint8_t *elem_width_ptr = (uint8_t *) &elem_width;
+        uint8_t *initial_element_capacity_ptr = (uint8_t *) &initial_element_capacity;
+        uint8_t *resize_quantity_ptr = (uint8_t *) &resize_quantity;
+        uint8_t *initial_first_unoccupied_gap_index_ptr = (uint8_t *) &expected_first_unoccupied_gap_index;
+        uint8_t expected_data[] = {
+            elem_width_ptr[0],
+            elem_width_ptr[1],
+            elem_width_ptr[2],
+            elem_width_ptr[3],
+            initial_element_capacity_ptr[0],
+            initial_element_capacity_ptr[1],
+            initial_element_capacity_ptr[2],
+            initial_element_capacity_ptr[3],
+            resize_quantity_ptr[0],
+            resize_quantity_ptr[1],
+            resize_quantity_ptr[2],
+            resize_quantity_ptr[3],
+            initial_first_unoccupied_gap_index_ptr[0],
+            initial_first_unoccupied_gap_index_ptr[1],
+            initial_first_unoccupied_gap_index_ptr[2],
+            initial_first_unoccupied_gap_index_ptr[3],
+            expected_vector_occupany_ptr[0],
+            expected_vector_occupany_ptr[1],
+            expected_vector_occupany_ptr[2],
+            expected_vector_occupany_ptr[3],
+            1, 0, 0, 0,                                             // data[0]->header->occupied
+            value_ptr[0], value_ptr[1], value_ptr[2], value_ptr[3], // data[0]->a
+            value_ptr[0], value_ptr[1], value_ptr[2], value_ptr[3], // data[0]->b
+            0, 0, 0, 0,                                             // data[1]->header->occupied  (recently vacated)
+            0, 0, 0, 0,                                             // data[1]->a
+            0, 0, 0, 0,                                             // data[1]->b
+            0, 0, 0, 0,                                             // data[2]->header->occupied  (recently vacated)
+            0, 0, 0, 0,                                             // data[2]->a
+            0, 0, 0, 0,                                             // data[2]->b
+            1, 0, 0, 0,                                             // data[3]->header->occupied
+            value_ptr[0], value_ptr[1], value_ptr[2], value_ptr[3], // data[3]->a
+            value_ptr[0], value_ptr[1], value_ptr[2], value_ptr[3], // data[3]->b
+            0, 0, 0, 0,                                             // data[4]->header->occupied  (never filled)
+            0, 0, 0, 0,                                             // data[4]->a
+            0, 0, 0, 0                                              // data[4]->b
+        };
+        assert(sizeof (expected_data) == 80);
+        assert(memcmp(v, expected_data, sizeof (expected_data)) == 0);
+    }
+
+    TEST_PASSED;
+}
+
+void test_vacate_slot_in_vector_that_has_gaps_and_the_slot_were_vacating_is_after_the_existing_gap_and_there_is_another_occupied_slot_after() {
+    TEST_STARTING;
+    float value = 123.45;
+    uint8_t *value_ptr = (uint8_t*) &value;
+
+    uint32_t elem_width = sizeof (elem_t);
+    uint32_t initial_element_capacity = 8;
+    uint32_t resize_quantity = 8;
+    int32_t initial_first_unoccupied_gap_index = LVEC_NO_GAPS;
+
+    lvec_t *v = lvec_create(elem_width, initial_element_capacity, resize_quantity);
+    assert(v != NULL);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    void *ptr1 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr1 != NULL);
+    ((elem_t*) ptr1)->a = value;
+    ((elem_t*) ptr1)->b = value;
+    void *ptr2 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr2 != NULL);
+    ((elem_t*) ptr2)->a = value;
+    ((elem_t*) ptr2)->b = value;
+    void *ptr3 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr3 != NULL);
+    ((elem_t*) ptr3)->a = value;
+    ((elem_t*) ptr3)->b = value;
+    void *ptr4 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr4 != NULL);
+    ((elem_t*) ptr4)->a = value;
+    ((elem_t*) ptr4)->b = value;
+    void *ptr5 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr5 != NULL);
+    ((elem_t*) ptr5)->a = value;
+    ((elem_t*) ptr5)->b = value;
+    void *ptr6 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr6 != NULL);
+    ((elem_t*) ptr6)->a = value;
+    ((elem_t*) ptr6)->b = value;
+
+    assert(v->vector_occupancy == 6);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    lvec_vacate_slot_at_index(v, 2);
+    assert(v->vector_occupancy == 5);
+    assert(v->first_unoccupied_gap_index == 2);
+
+    // slot 2 is vacated, now lets empty slot 3 (which is after the first gap, and before the final element in the vector)
+    lvec_vacate_slot_at_index(v, 3);
+    assert(v->vector_occupancy == 4);
+    assert(v->first_unoccupied_gap_index == 2);
+
+    lvec_free(v);
+    TEST_PASSED;
+}
+
+void test_vacate_slot_in_vector_that_has_gaps_and_the_slot_were_vacating_is_after_the_existing_gap_and_there_is_no_other_occupied_slot_after() {
+    TEST_STARTING;
+    float value = 123.45;
+    uint8_t *value_ptr = (uint8_t*) &value;
+
+    uint32_t elem_width = sizeof (elem_t);
+    uint32_t initial_element_capacity = 8;
+    uint32_t resize_quantity = 8;
+    int32_t initial_first_unoccupied_gap_index = LVEC_NO_GAPS;
+
+    lvec_t *v = lvec_create(elem_width, initial_element_capacity, resize_quantity);
+    assert(v != NULL);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    void *ptr1 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr1 != NULL);
+    ((elem_t*) ptr1)->a = value;
+    ((elem_t*) ptr1)->b = value;
+    void *ptr2 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr2 != NULL);
+    ((elem_t*) ptr2)->a = value;
+    ((elem_t*) ptr2)->b = value;
+    void *ptr3 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr3 != NULL);
+    ((elem_t*) ptr3)->a = value;
+    ((elem_t*) ptr3)->b = value;
+    void *ptr4 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr4 != NULL);
+    ((elem_t*) ptr4)->a = value;
+    ((elem_t*) ptr4)->b = value;
+
+    assert(v->vector_occupancy == 4);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    lvec_vacate_slot_at_index(v, 2);
+    assert(v->vector_occupancy == 3);
+    assert(v->first_unoccupied_gap_index == 2);
+
+    // slot 2 is vacated, now lets empty slot 3 (which is after the first gap)
+    lvec_vacate_slot_at_index(v, 3);
+    assert(v->vector_occupancy == 2);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    lvec_free(v);
+    TEST_PASSED;
+}
+
+void test_vacate_slot_in_vector_that_has_gaps_and_the_slot_were_vacating_is_after_the_existing_gap_and_there_is_an_occupied_slot_after() {
+    TEST_STARTING;
+    float value = 123.45;
+    uint8_t *value_ptr = (uint8_t*) &value;
+
+    uint32_t elem_width = sizeof (elem_t);
+    uint32_t initial_element_capacity = 8;
+    uint32_t resize_quantity = 8;
+    int32_t initial_first_unoccupied_gap_index = LVEC_NO_GAPS;
+
+    lvec_t *v = lvec_create(elem_width, initial_element_capacity, resize_quantity);
+    assert(v != NULL);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    void *ptr1 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr1 != NULL);
+    ((elem_t*) ptr1)->a = value;
+    ((elem_t*) ptr1)->b = value;
+    void *ptr2 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr2 != NULL);
+    ((elem_t*) ptr2)->a = value;
+    ((elem_t*) ptr2)->b = value;
+    void *ptr3 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr3 != NULL);
+    ((elem_t*) ptr3)->a = value;
+    ((elem_t*) ptr3)->b = value;
+    void *ptr4 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr4 != NULL);
+    ((elem_t*) ptr4)->a = value;
+    ((elem_t*) ptr4)->b = value;
+    void *ptr5 = lvec_get_pointer_to_vacant_slot(&v);
+    assert(ptr5 != NULL);
+    ((elem_t*) ptr5)->a = value;
+    ((elem_t*) ptr5)->b = value;
+
+    assert(v->vector_occupancy == 5);
+    assert(v->first_unoccupied_gap_index == LVEC_NO_GAPS);
+
+    lvec_vacate_slot_at_index(v, 2);
+    assert(v->vector_occupancy == 4);
+    assert(v->first_unoccupied_gap_index == 2);
+
+    // slot 2 is vacated, now lets empty slot 3 (which is after the first gap and before the last element in the vector)
+    lvec_vacate_slot_at_index(v, 3);
+    assert(v->vector_occupancy == 3);
+    assert(v->first_unoccupied_gap_index == 2);
+
+    lvec_free(v);
+    TEST_PASSED;
+}
+
 int main() {
 
     // sanity check
@@ -482,6 +731,10 @@ int main() {
     // test vacate slots
     test_vacate_last_slot_on_a_gapless_vector();
     test_vacate_middle_slot_on_gapless_vector();
+    test_vacate_slot_in_vector_that_has_gaps_and_the_slot_were_vacating_is_before_the_existing_gap();
+    test_vacate_slot_in_vector_that_has_gaps_and_the_slot_were_vacating_is_after_the_existing_gap_and_there_is_another_occupied_slot_after();
+    test_vacate_slot_in_vector_that_has_gaps_and_the_slot_were_vacating_is_after_the_existing_gap_and_there_is_no_other_occupied_slot_after();
+    test_vacate_slot_in_vector_that_has_gaps_and_the_slot_were_vacating_is_after_the_existing_gap_and_there_is_an_occupied_slot_after();
 
     return 0;
 }

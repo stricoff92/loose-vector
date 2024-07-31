@@ -126,7 +126,8 @@ void lvec_vacate_slot_at_index(lvec_t *v, uint32_t index) {
         else {
             bool any_elements_after_deleted_index = false;
             for(
-                uint32_t element_ix = index + 1;
+                // uint32_t element_ix = index + 1;
+                uint32_t element_ix = v->first_unoccupied_gap_index + 1;
                 element_ix < v->vector_capacity_element_count;
                 element_ix++
             ) {
