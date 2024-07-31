@@ -50,6 +50,7 @@ void* lvec_get_pointer_to_vacant_slot(lvec_t **v) {
         void *ptr;
         if((*v)->first_unoccupied_gap_index == LVEC_NO_GAPS) {
             ptr = (*v)->data + ((*v)->element_width * (*v)->vector_occupancy);
+            ((lvec_element_header_t*) ptr)->occupied = true;
             (*v)->vector_occupancy++;
         } else {
             // return pointer to first unoccupied gap,
@@ -60,8 +61,8 @@ void* lvec_get_pointer_to_vacant_slot(lvec_t **v) {
             (*v)->vector_occupancy++;
 
             // mark the newly occupied slot as occupied
+            ((lvec_element_header_t*) ptr)->occupied = true;
             uint8_t *data = (uint8_t*) ptr;
-            ((lvec_element_header_t*) data)->occupied = false;
             uint32_t element_ix = (*v)->first_unoccupied_gap_index;
 
             // find the next unoccupied gap, or verify that there are no more gaps.
