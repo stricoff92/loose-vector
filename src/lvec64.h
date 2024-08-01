@@ -38,10 +38,10 @@ lvec64_t* lvec64_create(
 
     lvec64_t *v = (lvec64_t *) ptr;
     v->element_width = element_width;
-    v->element_count = 0;
+    // v->element_count = 0; // calloc already sets this to 0
     v->resize_quantity = resize_quantity;
     v->element_count_max = initial_max_elements;
-    v->occupancy_bitmap = 0x0000000000000000;
+    // v->occupancy_bitmap = 0x0000000000000000; // calloc already sets this to 0
     return v;
 }
 
