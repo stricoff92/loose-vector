@@ -17,14 +17,14 @@ Iteration example:
 ```c
 
 uint32_t found_elements = 0;
-for(uint32_t i=0; i < v->element_count_max; i++){
+for(
+    uint32_t i=0;
+    i < v->element_count_max && found_elements < v->element_count;
+    i++
+){
     if(!lvec64_index_is_occupied(v, i)) continue;
     found_elements++;
 
-    // do stuff
-
-
-    if(found_elements >= v->element_count) break;
 }
 
 ```
