@@ -159,11 +159,49 @@ void test_the_vector_can_be_expanded_when_a_pointer_is_allocated_to_a_full_vecto
 }
 
 void test_pointers_cannot_be_allocated_to_a_vector_with_that_is_at_capacity_and_can_be_expanded_but_not_the_full_resize_quantity() {
-
+    TEST_STARTING;
+    uint32_t element_width = 24;
+    uint32_t initial_max_elements = 30;
+    uint32_t resize_quantity = 30;
+    lvec64_t *v = lvec64_create(element_width, initial_max_elements, resize_quantity);
+    assert(v != NULL);
+    uint64_t expected_bitmap = 0ULL;
+    for(uint64_t i = 0; i < 30; i++) {
+        assert(lvec64_get_pointer_to_vacant_slot(&v) != NULL);
+    }
+    assert(v->element_count == 30);
+    assert(v->element_count_max == 30);
+    for(uint64_t i = 0; i < 30; i++) {
+        assert(lvec64_get_pointer_to_vacant_slot(&v) != NULL);
+    }
+    assert(v->element_count == 60);
+    assert(v->element_count_max == 60);
+    assert(lvec64_get_pointer_to_vacant_slot(&v) != NULL);
+    assert(v->element_count == 61);
+    assert(v->element_count_max == 64);
+    lvec64_free(v);
+    TEST_PASSED;
 }
 
 void test_pointers_cannot_be_allocated_to_a_vector_with_that_is_at_capacity_and_cannot_be_expanded() {
+    TEST_STARTING;
+    uint32_t element_width = 24;
+    uint32_t initial_max_elements = 8;
+    uint32_t resize_quantity = 8;
+    lvec64_t *v = lvec64_create(element_width, initial_max_elements, resize_quantity);
+    assert(v != NULL);
+    uint64_t expected_bitmap = 0ULL;
+    for(uint64_t i = 0; i < LVEC64_MAX_ELEMENT_COUNT; i++) {
+        assert(lvec64_get_pointer_to_vacant_slot(&v) != NULL);
+        expected_bitmap |= (1ULL << (uint64_t) i);
+        assert(v->occupancy_bitmap == expected_bitmap);
+    }
 
+    assert(v->element_count == LVEC64_MAX_ELEMENT_COUNT);
+    assert(lvec64_get_pointer_to_vacant_slot(&v) == NULL);
+
+    lvec64_free(v);
+    TEST_PASSED;
 }
 
 
@@ -186,6 +224,7 @@ int main() {
     test_pointers_can_be_allocated_to_an_empty_vector();
     test_pointers_can_be_allocated_to_a_vector_with_gaps();
     test_the_vector_can_be_expanded_when_a_pointer_is_allocated_to_a_full_vector();
+    test_pointers_cannot_be_allocated_to_a_vector_with_that_is_at_capacity_and_can_be_expanded_but_not_the_full_resize_quantity();
     test_pointers_cannot_be_allocated_to_a_vector_with_that_is_at_capacity_and_cannot_be_expanded();
 
     // test vacate slot functionality

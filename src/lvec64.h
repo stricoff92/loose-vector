@@ -55,7 +55,7 @@ void* lvec64_get_pointer_to_vacant_slot(lvec64_t **v) {
     if((*v)->element_count >= LVEC64_MAX_ELEMENT_COUNT) return NULL;
 
     if((*v)->element_count < (*v)->element_count_max) {
-        uint32_t new_index = __builtin_ffs(~(*v)->occupancy_bitmap) - 1;
+        uint32_t new_index = __builtin_ffsll(~(*v)->occupancy_bitmap) - 1;
         void *ptr = (*v)->data + ((*v)->element_width * new_index);
         (*v)->occupancy_bitmap |= (1ULL << new_index);
         (*v)->element_count++;
@@ -77,7 +77,7 @@ void* lvec64_get_pointer_to_vacant_slot(lvec64_t **v) {
         memset(
             (*v)->data + ((*v)->element_width * (*v)->element_count_max),
             0,
-            (*v)->resize_quantity * (*v)->element_width
+            slots_to_add * (*v)->element_width
         );
         (*v)->element_count_max += slots_to_add;
         return lvec64_get_pointer_to_vacant_slot(v);
