@@ -159,14 +159,38 @@ void test_pointers_can_be_allocated_to_a_vector_with_gaps(){
     assert(lvec64_get_pointer_to_vacant_slot(&v) != NULL);
     assert(lvec64_get_pointer_to_vacant_slot(&v) != NULL);
     assert(lvec64_get_pointer_to_vacant_slot(&v) != NULL);
-    assert(v->occupancy_bitmap == (1ULL << 0 | 1ULL << 1 | 1ULL << 2 | 1ULL << 3));
+    assert(lvec64_get_pointer_to_vacant_slot(&v) != NULL);
+    assert(lvec64_get_pointer_to_vacant_slot(&v) != NULL);
+    assert(lvec64_get_pointer_to_vacant_slot(&v) != NULL);
+    assert(lvec64_get_pointer_to_vacant_slot(&v) != NULL);
+    assert(v->element_count == 8);
 
+    assert(lvec64_vacate_slot(v, 0));
     assert(lvec64_vacate_slot(v, 2));
-    assert(v->occupancy_bitmap == (1ULL << 0 | 1ULL << 1 /*| 1ULL << 2*/ | 1ULL << 3));
-    void *ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(lvec64_vacate_slot(v, 4));
+    assert(lvec64_vacate_slot(v, 5));
+    assert(v->element_count == 4);
+
+    void *ptr;
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    assert(ptr == v->data + element_width * 0);
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
     assert(ptr != NULL);
     assert(ptr == v->data + element_width * 2);
-    assert(v->occupancy_bitmap == (1ULL << 0 | 1ULL << 1 | 1ULL << 2 | 1ULL << 3));
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    assert(ptr == v->data + element_width * 4);
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    assert(ptr == v->data + element_width * 5);
+    assert(v->element_count == 8);
+
+    // all gaps filled in, should be at 8 elements, so next percurment should be at slot 8
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    assert(ptr == v->data + element_width * 8);
+    assert(v->element_count == 9);
 
     lvec64_free(v);
     TEST_PASSED;
