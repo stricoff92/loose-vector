@@ -204,8 +204,139 @@ void test_pointers_cannot_be_allocated_to_a_vector_with_that_is_at_capacity_and_
     TEST_PASSED;
 }
 
+void test_newly_allocated_memory_regions_are_zeroed_out() {
+    TEST_STARTING;
+    float val = 12345.67;
+    uint8_t *valp = (uint8_t*) &val;
+    uint32_t element_width = 4;
+    uint32_t initial_max_elements = 2;
+    uint32_t resize_quantity = 2;
+    lvec64_t *v = lvec64_create(element_width, initial_max_elements, resize_quantity);
+    assert(v != NULL);
+    float *ptr;
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    *ptr = val;
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    *ptr = val;
+
+    {
+        uint8_t* element_width_ptr = (uint8_t*) &element_width;
+        uint8_t* initial_max_elements_ptr = (uint8_t*) &initial_max_elements;
+        uint8_t* resize_quantity_ptr = (uint8_t*) &resize_quantity;
+        uint32_t expected_element_count = 2;
+        uint8_t *expected_element_count_ptr = (uint8_t*) &expected_element_count;
+        uint64_t expected_occupancy_bitmap = (1 << 0UL | 1 << 1ULL);
+        uint8_t *expected_occupancy_bitmap_ptr = (uint8_t*) &expected_occupancy_bitmap;
+        uint8_t expected_memory[] = {
+            element_width_ptr[0],
+            element_width_ptr[1],
+            element_width_ptr[2],
+            element_width_ptr[3],
+            expected_element_count_ptr[0],
+            expected_element_count_ptr[1],
+            expected_element_count_ptr[2],
+            expected_element_count_ptr[3],
+            initial_max_elements_ptr[0],
+            initial_max_elements_ptr[1],
+            initial_max_elements_ptr[2],
+            initial_max_elements_ptr[3],
+            resize_quantity_ptr[0],
+            resize_quantity_ptr[1],
+            resize_quantity_ptr[2],
+            resize_quantity_ptr[3],
+            expected_occupancy_bitmap_ptr[0],
+            expected_occupancy_bitmap_ptr[1],
+            expected_occupancy_bitmap_ptr[2],
+            expected_occupancy_bitmap_ptr[3],
+            expected_occupancy_bitmap_ptr[4],
+            expected_occupancy_bitmap_ptr[5],
+            expected_occupancy_bitmap_ptr[6],
+            expected_occupancy_bitmap_ptr[7],
+            valp[0], // data[0]
+            valp[1], // data[0]
+            valp[2], // data[0]
+            valp[3], // data[0]
+            valp[0], // data[1]
+            valp[1], // data[1]
+            valp[2], // data[1]
+            valp[3], // data[1]
+        };
+        assert(memcmp(v, expected_memory, sizeof(expected_memory)) == 0);
+    }
+
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    {
+        uint8_t* element_width_ptr = (uint8_t*) &element_width;
+        uint32_t max_elements = 4;
+        uint8_t* max_elements_ptr = (uint8_t*) &max_elements;
+        uint8_t* resize_quantity_ptr = (uint8_t*) &resize_quantity;
+        uint32_t expected_element_count = 3;
+        uint8_t *expected_element_count_ptr = (uint8_t*) &expected_element_count;
+        uint64_t expected_occupancy_bitmap = (1 << 0UL | 1 << 1ULL | 1 << 2ULL);
+        uint8_t *expected_occupancy_bitmap_ptr = (uint8_t*) &expected_occupancy_bitmap;
+        uint8_t expected_memory[] = {
+            element_width_ptr[0],
+            element_width_ptr[1],
+            element_width_ptr[2],
+            element_width_ptr[3],
+            expected_element_count_ptr[0],
+            expected_element_count_ptr[1],
+            expected_element_count_ptr[2],
+            expected_element_count_ptr[3],
+            max_elements_ptr[0],
+            max_elements_ptr[1],
+            max_elements_ptr[2],
+            max_elements_ptr[3],
+            resize_quantity_ptr[0],
+            resize_quantity_ptr[1],
+            resize_quantity_ptr[2],
+            resize_quantity_ptr[3],
+            expected_occupancy_bitmap_ptr[0],
+            expected_occupancy_bitmap_ptr[1],
+            expected_occupancy_bitmap_ptr[2],
+            expected_occupancy_bitmap_ptr[3],
+            expected_occupancy_bitmap_ptr[4],
+            expected_occupancy_bitmap_ptr[5],
+            expected_occupancy_bitmap_ptr[6],
+            expected_occupancy_bitmap_ptr[7],
+            valp[0], // data[0]
+            valp[1], // data[0]
+            valp[2], // data[0]
+            valp[3], // data[0]
+            valp[0], // data[1]
+            valp[1], // data[1]
+            valp[2], // data[1]
+            valp[3], // data[1]
+            0, 0, 0, 0, // data[2] // newly minted slots are zeroed out
+            0, 0, 0, 0  // data[3] //
+        };
+        assert(memcmp(v, expected_memory, sizeof(expected_memory)) == 0);
+    }
+    TEST_PASSED;
+}
+
 
 // TEST VACATE SLOT
+
+void test_can_vacate_slot_that_is_filled() {
+
+}
+
+void test_cannot_vacate_slot_that_is_outside_range_of_vector() {
+
+}
+
+void test_vacating_slot_zeros_out_memory_and_doesnt_change_adjacent_slots() {
+
+}
+
+void test_vacating_slot_that_is_in_range_but_unoccupied_has_no_effect() {
+
+}
+
 
 typedef struct elem_t {
     float a;
@@ -226,8 +357,13 @@ int main() {
     test_the_vector_can_be_expanded_when_a_pointer_is_allocated_to_a_full_vector();
     test_pointers_cannot_be_allocated_to_a_vector_with_that_is_at_capacity_and_can_be_expanded_but_not_the_full_resize_quantity();
     test_pointers_cannot_be_allocated_to_a_vector_with_that_is_at_capacity_and_cannot_be_expanded();
+    test_newly_allocated_memory_regions_are_zeroed_out();
 
     // test vacate slot functionality
+    test_can_vacate_slot_that_is_filled();
+    test_cannot_vacate_slot_that_is_outside_range_of_vector();
+    test_vacating_slot_zeros_out_memory_and_doesnt_change_adjacent_slots();
+    test_vacating_slot_that_is_in_range_but_unoccupied_has_no_effect();
 
     // test macros
 

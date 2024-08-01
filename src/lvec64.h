@@ -10,10 +10,6 @@
 #include <string.h>
 
 
-#define LVEC_NO_GAPS -1
-#define LVEC_NO_INDEXES_IN_VECTOR -1
-
-
 #define LVEC64_MAX_ELEMENT_COUNT 64
 
 typedef struct lvec64_t {
@@ -47,9 +43,8 @@ lvec64_t* lvec64_create(
     return v;
 }
 
-void lvec64_free(lvec64_t *v) {
-    free(v);
-}
+#define lvec64_free(v) free(v)
+
 
 void* lvec64_get_pointer_to_vacant_slot(lvec64_t **v) {
     if((*v)->element_count >= LVEC64_MAX_ELEMENT_COUNT) return NULL;
