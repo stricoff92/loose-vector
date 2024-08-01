@@ -14,6 +14,8 @@
 Deleting items causes the vector to become fragmented. Adding new items fills in the gaps.
 
 
+TODO: add a `last_provisioned_index` field to `lvec64_t` and set this to the index of the most recently assigned index.
+
 Example usage:
 ```c
 
