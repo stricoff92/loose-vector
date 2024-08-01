@@ -13,6 +13,43 @@
 
 Deleting items causes the vector to become fragmented. Adding new items fills in the gaps.
 
+
+Example usage:
+```c
+
+typedef test_object_t {
+  int a;
+  int b;
+} test_object_t;
+
+
+
+// create vector that can initially hold 16 objects, and grows 16 at a time.
+lvec64_t *v = lvec64_create(
+    sizeof (test_object_t),
+    16,
+    16
+);
+
+// load data into the vector
+test_object_t *val1 = lvec64_get_pointer_to_vacant_slot(&v);
+val1->a = 12;
+val1->b = 16;
+test_object_t *val2 = lvec64_get_pointer_to_vacant_slot(&v);
+val2->a = 123;
+val2->b = 234;
+
+
+// remove data at index 0
+lvec64_vacate_slot(v, 0);
+
+
+// free memory
+lvec64_free(v);
+
+```
+
+
 Iteration example:
 ```c
 
