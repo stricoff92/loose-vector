@@ -597,6 +597,37 @@ void test_vacating_slot_zeros_out_memory_and_doesnt_change_adjacent_slots() {
     TEST_PASSED;
 }
 
+// Test Macros
+
+void test_lvec64_index_is_occupied_macro() {
+    TEST_STARTING;
+    uint32_t element_width = 8;
+    uint32_t element_count_max = 16;
+    uint32_t resize_quantity = 12;
+    lvec64_t *v = lvec64_create(element_width, element_count_max, resize_quantity);
+    assert(v != NULL);
+    void *ptr;
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    assert(lvec64_index_is_occupied(v, 0));
+    assert(lvec64_index_is_occupied(v, 1));
+    assert(lvec64_index_is_occupied(v, 2));
+    assert(!lvec64_index_is_occupied(v, 3));
+
+    assert(lvec64_vacate_slot(v, 1));
+    assert(lvec64_index_is_occupied(v, 0));
+    assert(!lvec64_index_is_occupied(v, 1));
+    assert(lvec64_index_is_occupied(v, 2));
+    assert(!lvec64_index_is_occupied(v, 3));
+
+    lvec64_free(v);
+    TEST_PASSED;
+}
+
 
 int main() {
 
@@ -621,6 +652,7 @@ int main() {
     test_vacating_slot_zeros_out_memory_and_doesnt_change_adjacent_slots();
 
     // test macros
+    test_lvec64_index_is_occupied_macro();
 
     return 0;
 }

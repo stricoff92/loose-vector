@@ -12,6 +12,8 @@
 
 #define LVEC64_MAX_ELEMENT_COUNT 64
 
+#define lvec64_index_is_occupied(v, i) (v->occupancy_bitmap & (1ULL << i))
+
 typedef struct lvec64_t {
     uint32_t element_width;
     uint32_t element_count;
@@ -42,6 +44,7 @@ lvec64_t* lvec64_create(
     v->occupancy_bitmap = 0x0000000000000000;
     return v;
 }
+
 
 #define lvec64_free(v) free(v)
 
