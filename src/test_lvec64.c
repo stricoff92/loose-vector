@@ -213,7 +213,7 @@ void test_the_vector_can_be_expanded_when_a_pointer_is_allocated_to_a_full_vecto
     TEST_PASSED;
 }
 
-void test_pointers_cannot_be_allocated_to_a_vector_with_that_is_at_capacity_and_can_be_expanded_but_not_the_full_resize_quantity() {
+void test_pointers_can_be_allocated_to_a_vector_that_is_at_capacity_and_can_be_expanded_but_not_the_full_resize_quantity() {
     TEST_STARTING;
     uint32_t element_width = 24;
     uint32_t initial_max_elements = 30;
@@ -238,7 +238,7 @@ void test_pointers_cannot_be_allocated_to_a_vector_with_that_is_at_capacity_and_
     TEST_PASSED;
 }
 
-void test_pointers_cannot_be_allocated_to_a_vector_with_that_is_at_capacity_and_cannot_be_expanded() {
+void test_pointers_cannot_be_allocated_to_a_vector_that_is_at_capacity_and_cannot_be_expanded() {
     TEST_STARTING;
     uint32_t element_width = 24;
     uint32_t initial_max_elements = 8;
@@ -641,8 +641,8 @@ int main() {
     test_pointers_can_be_allocated_to_an_empty_vector();
     test_pointers_can_be_allocated_to_a_vector_with_gaps();
     test_the_vector_can_be_expanded_when_a_pointer_is_allocated_to_a_full_vector();
-    test_pointers_cannot_be_allocated_to_a_vector_with_that_is_at_capacity_and_can_be_expanded_but_not_the_full_resize_quantity();
-    test_pointers_cannot_be_allocated_to_a_vector_with_that_is_at_capacity_and_cannot_be_expanded();
+    test_pointers_can_be_allocated_to_a_vector_that_is_at_capacity_and_can_be_expanded_but_not_the_full_resize_quantity();
+    test_pointers_cannot_be_allocated_to_a_vector_that_is_at_capacity_and_cannot_be_expanded();
     test_newly_allocated_memory_regions_are_zeroed_out();
 
     // test vacate slot functionality
