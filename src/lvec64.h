@@ -81,6 +81,7 @@ void* lvec64_get_pointer_to_vacant_slot(lvec64_t **v) {
 
 bool lvec64_vacate_slot(lvec64_t *v, uint32_t index) {
     if((index >= LVEC64_MAX_ELEMENT_COUNT) || (index >= v->element_count_max)) return false;
+    if(!(v->occupancy_bitmap & (1ULL << index))) return false;
     v->occupancy_bitmap &= ~(1ULL << index);
     v->element_count--;
     memset(v->data + (v->element_width * index), 0, v->element_width);

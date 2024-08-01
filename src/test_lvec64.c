@@ -9,6 +9,61 @@
 #include "lvec64.h"
 
 
+
+
+/* A Fast hash function implementation by Paul Hsieh
+    http://www.azillionmonkeys.com/qed/hash.html
+*/
+#undef get16bits
+#if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__) \
+  || defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)
+#define get16bits(d) (*((const uint16_t *) (d)))
+#endif
+#if !defined (get16bits)
+#define get16bits(d) ((((uint32_t)(((const uint8_t *)(d))[1])) << 8)\
+                       +(uint32_t)(((const uint8_t *)(d))[0]) )
+#endif
+static inline uint32_t super_fast_hash (const char *data, int len) {
+    uint32_t hash = len, tmp;
+    int rem;
+    if (len <= 0 || data == NULL) return 0; // todo: can this be safely removed?
+    rem = len & 3;
+    len >>= 2;
+    for (;len > 0; len--) {
+        hash  += get16bits (data);
+        tmp    = (get16bits (data+2) << 11) ^ hash;
+        hash   = (hash << 16) ^ tmp;
+        data  += 2*sizeof (uint16_t);
+        hash  += hash >> 11;
+    }
+    switch (rem) {
+        case 3: hash += get16bits (data);
+                hash ^= hash << 16;
+                hash ^= ((signed char)data[sizeof (uint16_t)]) << 18;
+                hash += hash >> 11;
+                break;
+        case 2: hash += get16bits (data);
+                hash ^= hash << 11;
+                hash += hash >> 17;
+                break;
+        case 1: hash += (signed char)*data;
+                hash ^= hash << 10;
+                hash += hash >> 1;
+    }
+    hash ^= hash << 3;
+    hash += hash >> 5;
+    hash ^= hash << 4;
+    hash += hash >> 17;
+    hash ^= hash << 25;
+    hash += hash >> 6;
+    return hash;
+}
+// End of Fast hash function implementation
+
+
+#define hash_lvec64(v) super_fast_hash((char*) v, sizeof(lvec64_t) + v->element_width * v->element_count_max)
+
+
 #define TEST_STARTING printf("running test %s ", __func__)
 #define TEST_PASSED printf("[ok]\n")
 
@@ -322,26 +377,226 @@ void test_newly_allocated_memory_regions_are_zeroed_out() {
 // TEST VACATE SLOT
 
 void test_can_vacate_slot_that_is_filled() {
+    TEST_STARTING;
+    uint32_t element_width = 8;
+    uint32_t element_count_max = 16;
+    uint32_t resize_quantity = 12;
+    lvec64_t *v = lvec64_create(element_width, element_count_max, resize_quantity);
+    assert(v != NULL);
+    void *ptr;
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
 
+    assert(lvec64_vacate_slot(v, 1));
+
+    assert(v->occupancy_bitmap == (1ULL << 0 | 1ULL << 2));
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    assert(ptr == v->data + 8 * 1);
+
+    lvec64_free(v);
+    TEST_PASSED;
 }
+
 
 void test_cannot_vacate_slot_that_is_outside_range_of_vector() {
+    TEST_STARTING;
+    uint32_t element_width = 8;
+    uint32_t element_count_max = 16;
+    uint32_t resize_quantity = 12;
+    lvec64_t *v = lvec64_create(element_width, element_count_max, resize_quantity);
+    assert(v != NULL);
 
+    uint32_t control_hash = hash_lvec64(v);
+    assert(!lvec64_vacate_slot(v, element_count_max + 1));
+    assert(!lvec64_vacate_slot(v, LVEC64_MAX_ELEMENT_COUNT));
+    uint32_t test_hash = hash_lvec64(v);
+    assert(control_hash == test_hash);
+
+    lvec64_free(v);
+    TEST_PASSED;
 }
 
-void test_vacating_slot_zeros_out_memory_and_doesnt_change_adjacent_slots() {
-
-}
 
 void test_vacating_slot_that_is_in_range_but_unoccupied_has_no_effect() {
+    TEST_STARTING;
+    uint32_t element_width = 8;
+    uint32_t element_count_max = 16;
+    uint32_t resize_quantity = 12;
+    lvec64_t *v = lvec64_create(element_width, element_count_max, resize_quantity);
+    assert(v != NULL);
+    float val = 12345.67;
+    float *ptr;
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    *ptr = val;
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    *ptr = val;
 
+    uint32_t control_hash = hash_lvec64(v);
+    assert(!lvec64_vacate_slot(v, element_count_max - 1));
+    uint32_t test_hash = hash_lvec64(v);
+    assert(control_hash == test_hash);
+
+    lvec64_free(v);
+    TEST_PASSED;
 }
 
 
-typedef struct elem_t {
-    float a;
-    float b;
-} elem_t;
+void test_vacating_slot_zeros_out_memory_and_doesnt_change_adjacent_slots() {
+    TEST_STARTING;
+    uint32_t element_width = 4;
+    uint32_t element_count_max = 16;
+    uint32_t resize_quantity = 12;
+    lvec64_t *v = lvec64_create(element_width, element_count_max, resize_quantity);
+    assert(v != NULL);
+    float val = 12345.67;
+    float *ptr;
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    *ptr = val;
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    *ptr = val;
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    *ptr = val;
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    *ptr = val;
+    ptr = lvec64_get_pointer_to_vacant_slot(&v);
+    assert(ptr != NULL);
+    *ptr = val;
+
+    {
+        uint8_t *element_width_ptr = (uint8_t*) &element_width;
+        uint32_t max_elements = 16;
+        uint8_t *max_elements_ptr = (uint8_t*) &max_elements;
+        uint8_t *resize_quantity_ptr = (uint8_t*) &resize_quantity;
+        uint32_t expected_element_count = 5;
+        uint8_t *expected_element_count_ptr = (uint8_t*) &expected_element_count;
+        uint64_t expected_occupancy_bitmap = (1 << 0UL | 1 << 1ULL | 1 << 2ULL | 1 << 3ULL | 1 << 4ULL);
+        uint8_t *expected_occupancy_bitmap_ptr = (uint8_t*) &expected_occupancy_bitmap;
+        uint8_t* valp = (uint8_t*) &val;
+        uint8_t expected_memory[] = {
+            element_width_ptr[0],
+            element_width_ptr[1],
+            element_width_ptr[2],
+            element_width_ptr[3],
+            expected_element_count_ptr[0],
+            expected_element_count_ptr[1],
+            expected_element_count_ptr[2],
+            expected_element_count_ptr[3],
+            max_elements_ptr[0],
+            max_elements_ptr[1],
+            max_elements_ptr[2],
+            max_elements_ptr[3],
+            resize_quantity_ptr[0],
+            resize_quantity_ptr[1],
+            resize_quantity_ptr[2],
+            resize_quantity_ptr[3],
+            expected_occupancy_bitmap_ptr[0],
+            expected_occupancy_bitmap_ptr[1],
+            expected_occupancy_bitmap_ptr[2],
+            expected_occupancy_bitmap_ptr[3],
+            expected_occupancy_bitmap_ptr[4],
+            expected_occupancy_bitmap_ptr[5],
+            expected_occupancy_bitmap_ptr[6],
+            expected_occupancy_bitmap_ptr[7],
+            valp[0], // data[0]
+            valp[1], // data[0]
+            valp[2], // data[0]
+            valp[3], // data[0]
+            valp[0], // data[1]
+            valp[1], // data[1]
+            valp[2], // data[1]
+            valp[3], // data[1]
+            valp[0], // data[2]
+            valp[1], // data[2]
+            valp[2], // data[2]
+            valp[3], // data[2]
+            valp[0], // data[3]
+            valp[1], // data[3]
+            valp[2], // data[3]
+            valp[3], // data[3]
+            valp[0], // data[4]
+            valp[1], // data[4]
+            valp[2], // data[4]
+            valp[3]  // data[4]
+        };
+        assert(memcmp(v, expected_memory, sizeof(expected_memory)) == 0);
+    }
+
+    assert(lvec64_vacate_slot(v, 2));
+    {
+        uint8_t *element_width_ptr = (uint8_t*) &element_width;
+        uint32_t max_elements = 16;
+        uint8_t *max_elements_ptr = (uint8_t*) &max_elements;
+        uint8_t *resize_quantity_ptr = (uint8_t*) &resize_quantity;
+        uint32_t expected_element_count = 4;
+        uint8_t *expected_element_count_ptr = (uint8_t*) &expected_element_count;
+        uint64_t expected_occupancy_bitmap = (1 << 0UL | 1 << 1ULL /*| 1 << 2ULL */ | 1 << 3ULL | 1 << 4ULL);
+        uint8_t *expected_occupancy_bitmap_ptr = (uint8_t*) &expected_occupancy_bitmap;
+        uint8_t* valp = (uint8_t*) &val;
+        uint8_t expected_memory[] = {
+            element_width_ptr[0],
+            element_width_ptr[1],
+            element_width_ptr[2],
+            element_width_ptr[3],
+            expected_element_count_ptr[0],
+            expected_element_count_ptr[1],
+            expected_element_count_ptr[2],
+            expected_element_count_ptr[3],
+            max_elements_ptr[0],
+            max_elements_ptr[1],
+            max_elements_ptr[2],
+            max_elements_ptr[3],
+            resize_quantity_ptr[0],
+            resize_quantity_ptr[1],
+            resize_quantity_ptr[2],
+            resize_quantity_ptr[3],
+            expected_occupancy_bitmap_ptr[0],
+            expected_occupancy_bitmap_ptr[1],
+            expected_occupancy_bitmap_ptr[2],
+            expected_occupancy_bitmap_ptr[3],
+            expected_occupancy_bitmap_ptr[4],
+            expected_occupancy_bitmap_ptr[5],
+            expected_occupancy_bitmap_ptr[6],
+            expected_occupancy_bitmap_ptr[7],
+            valp[0], // data[0]
+            valp[1], // data[0]
+            valp[2], // data[0]
+            valp[3], // data[0]
+            valp[0], // data[1]
+            valp[1], // data[1]
+            valp[2], // data[1]
+            valp[3], // data[1]
+            0, 0, 0, 0,
+            // valp[0], // data[2]
+            // valp[1], // data[2]
+            // valp[2], // data[2]
+            // valp[3], // data[2]
+            valp[0], // data[3]
+            valp[1], // data[3]
+            valp[2], // data[3]
+            valp[3], // data[3]
+            valp[0], // data[4]
+            valp[1], // data[4]
+            valp[2], // data[4]
+            valp[3]  // data[4]
+        };
+        assert(memcmp(v, expected_memory, sizeof(expected_memory)) == 0);
+    }
+
+    lvec64_free(v);
+    TEST_PASSED;
+}
+
 
 int main() {
 
@@ -362,8 +617,8 @@ int main() {
     // test vacate slot functionality
     test_can_vacate_slot_that_is_filled();
     test_cannot_vacate_slot_that_is_outside_range_of_vector();
-    test_vacating_slot_zeros_out_memory_and_doesnt_change_adjacent_slots();
     test_vacating_slot_that_is_in_range_but_unoccupied_has_no_effect();
+    test_vacating_slot_zeros_out_memory_and_doesnt_change_adjacent_slots();
 
     // test macros
 
