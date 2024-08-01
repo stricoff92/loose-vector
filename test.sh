@@ -3,12 +3,12 @@
 
 set -e
 
-echo "running vec_t tests"
+echo "running lvec tests"
 
 mkdir -p build
-gcc src/test.c -o build/test
+gcc src/test_lvec64.c -o build/test
 ./build/test
 
-echo "✅ lvec_t tests pass "
+echo "✅ lvec tests pass "
 
 
