@@ -17,7 +17,7 @@ Deleting items causes the vector to become fragmented. Adding new items fills in
 Example usage:
 ```c
 
-typedef test_object_t {
+typedef struct test_object_t {
   int a;
   int b;
 } test_object_t;
