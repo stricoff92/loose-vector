@@ -1,8 +1,0 @@
-{
-    "files.associations": {
-        "*.ejs": "html",
-        "lvec_old.h": "c",
-        "assert.h": "c",
-        "lvec64.h": "c"
-    }
-}
