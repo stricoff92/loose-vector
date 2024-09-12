@@ -11,7 +11,7 @@
 #define LVEC_SEGMENT_SIZE 64
 
 
-typedef uint64_t lvec64_occupancy_map_t;
+typedef uint64_t lvec64_occupancy_bitmap_t;
 
 typedef struct lvec_header_t {
     uint32_t element_width;
@@ -20,22 +20,26 @@ typedef struct lvec_header_t {
 } lvec_header_t; 
 
 typedef struct lvec_segment_t {
-    lvec64_occupancy_map_t occupancy_bitmap;
+    lvec64_occupancy_bitmap_t occupancy_bitmap;
     uint8_t data[ ];
 } lvec_segment_t;
 
-
+// Calculate a pointer to a given segment index
 #define lvec_get_segment(head, segment_ix) \
     (lvec_segment_t*) \
-    (\
+    ( \
         ((uint8_t*)(head)) \
-        + (sizeof (lvec_header_t) + (head->element_width * LVEC_SEGMENT_SIZE * segment_ix) + (sizeof (lvec64_occupancy_map_t) * segment_ix) )\
+        + ( \
+            (sizeof (lvec_header_t)) \
+            + (head->element_width * LVEC_SEGMENT_SIZE * segment_ix) \
+            + (sizeof (lvec64_occupancy_bitmap_t) * segment_ix) \
+        )\
     )
 
 void* lvec_create(uint32_t element_width) {
     lvec_header_t *ptr = (lvec_header_t*) calloc(1,
         sizeof(lvec_header_t)
-        + sizeof (lvec64_occupancy_map_t)
+        + sizeof (lvec64_occupancy_bitmap_t)
         + (element_width * LVEC_SEGMENT_SIZE)
     );
     if(!ptr) return NULL;

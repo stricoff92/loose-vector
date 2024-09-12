@@ -73,12 +73,11 @@ void test_lvec_lvec_get_segment() {
 
     lvec_header_t head;
     head.element_width = 24;
-
     lvec_header_t *ptr = &head;
-
+    
     lvec_segment_t *seg;
     
-    // Test the first segment = head_start + sizeof head
+    // Test the first segment = head_ptr + sizeof head
     seg = lvec_get_segment(ptr, 0);
     assert(
         (((uint8_t*)ptr) + sizeof(lvec_header_t))
@@ -88,7 +87,7 @@ void test_lvec_lvec_get_segment() {
     for(int i = 0; i < 10000; i++) {
         seg = lvec_get_segment(ptr, i);
         assert(
-            (((uint8_t*)ptr) + sizeof(lvec_header_t) + head.element_width*LVEC_SEGMENT_SIZE*i + sizeof(lvec64_occupancy_map_t)*i)
+            (((uint8_t*)ptr) + sizeof(lvec_header_t) + head.element_width*LVEC_SEGMENT_SIZE*i + sizeof(lvec64_occupancy_bitmap_t)*i)
             == (uint8_t*)seg
         );
     }
