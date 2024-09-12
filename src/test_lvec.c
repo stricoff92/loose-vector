@@ -68,7 +68,7 @@ static inline uint32_t super_fast_hash (const char *data, int len) {
 #define TEST_STARTING printf("running test %s ", __func__)
 #define TEST_PASSED printf("[ok]\n")
 
-void test_lvec_lvec_get_segment() {
+void test_lvec_get_segment() {
     TEST_STARTING;
 
     lvec_header_t head;
@@ -94,10 +94,11 @@ void test_lvec_lvec_get_segment() {
     TEST_PASSED;
 }
 
+
 int main() {
 
     // Test create vector functionality
-    test_lvec_lvec_get_segment();
+    test_lvec_get_segment();
 
 
     return 0;
