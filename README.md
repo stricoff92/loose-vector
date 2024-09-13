@@ -12,6 +12,8 @@ Deleting items causes the vector to become fragmented. Adding new items fills in
 
 ![](lvecdocument.jpg)
 
+<hr>
+
 ### lvec64_t
 
  - A resizable vector that holds elements of equal width. Data elements are stored in contiguous memory.
