@@ -473,6 +473,15 @@ void test_lvec_get_ptr_to_multisegment_vacant_with_gaps(void) {
     TEST_PASSED;
 }
 
+void test_lvec_cannot_vacate_slot_that_is_out_of_bounds(void) {
+    TEST_STARTING;
+    TEST_PASSED;
+}
+
+void test_lvec_cannot_vacate_slot_that_is_unoccupied(void) {
+    TEST_STARTING;
+    TEST_PASSED;
+}
 
 int main() {
 
@@ -494,6 +503,9 @@ int main() {
 
     test_lvec_get_ptr_to_single_segment_vacant_with_gaps();
     test_lvec_get_ptr_to_multisegment_vacant_with_gaps();
+
+    test_lvec_cannot_vacate_slot_that_is_out_of_bounds();
+    test_lvec_cannot_vacate_slot_that_is_unoccupied();
 
     return 0;
 }
