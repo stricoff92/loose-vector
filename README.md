@@ -1,6 +1,16 @@
 # LooseVector
 ##  Vector Implementations in C
 
+### lvec_t
+
+ - A resizable vector that holds elements of equal width. Data elements are stored in contiguous memory.
+ - Vector holds an arbitary number of segments, each segment holds 64 elements.
+   - Each sector uses 1x `uint64_t` bitmap in order to find gaps.
+ - `lvec_get_pointer_to_vacant_slot` will reference each segments' bitmap in order intil it finds the first vacant slot (slot with the lowest index).
+
+Deleting items causes the vector to become fragmented. Adding new items fills in the gaps.
+
+![](lvecdocument.jpg)
 
 ### lvec64_t
 
