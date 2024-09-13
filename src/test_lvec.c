@@ -10,65 +10,23 @@
 #include "lvec.h"
 
 
-
-
-/* A Fast hash function implementation by Paul Hsieh
-    http://www.azillionmonkeys.com/qed/hash.html
-*/
-#undef get16bits
-#if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__) \
-  || defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)
-#define get16bits(d) (*((const uint16_t *) (d)))
-#endif
-#if !defined (get16bits)
-#define get16bits(d) ((((uint32_t)(((const uint8_t *)(d))[1])) << 8)\
-                       +(uint32_t)(((const uint8_t *)(d))[0]) )
-#endif
-static inline uint32_t super_fast_hash (const char *data, int len) {
-    uint32_t hash = len, tmp;
-    int rem;
-    if (len <= 0 || data == NULL) return 0; // todo: can this be safely removed?
-    rem = len & 3;
-    len >>= 2;
-    for (;len > 0; len--) {
-        hash  += get16bits (data);
-        tmp    = (get16bits (data+2) << 11) ^ hash;
-        hash   = (hash << 16) ^ tmp;
-        data  += 2*sizeof (uint16_t);
-        hash  += hash >> 11;
-    }
-    switch (rem) {
-        case 3: hash += get16bits (data);
-                hash ^= hash << 16;
-                hash ^= ((signed char)data[sizeof (uint16_t)]) << 18;
-                hash += hash >> 11;
-                break;
-        case 2: hash += get16bits (data);
-                hash ^= hash << 11;
-                hash += hash >> 17;
-                break;
-        case 1: hash += (signed char)*data;
-                hash ^= hash << 10;
-                hash += hash >> 1;
-    }
-    hash ^= hash << 3;
-    hash += hash >> 5;
-    hash ^= hash << 4;
-    hash += hash >> 17;
-    hash ^= hash << 25;
-    hash += hash >> 6;
-    return hash;
-}
-// End of Fast hash function implementation
-
-
-#define hash_lvec64(v) super_fast_hash((char*) v, sizeof(lvec64_t) + v->element_width * v->element_count_max)
-
-
 #define TEST_STARTING printf("running test %s ", __func__)
 #define TEST_PASSED printf("[ok]\n")
 
-void test_lvec_get_segment() {
+void test_lvec_create(void) {
+    TEST_STARTING;
+
+    lvec_header_t *v = lvec_create(24, 2, false);
+    assert(v != NULL);
+    assert(v->element_width == 24);
+    assert(v->segment_count == 2);
+    assert(v->hard_delete_slots == false);
+
+    lvec_free(v);
+    TEST_PASSED;
+}
+
+void test_lvec_get_segment(void) {
     TEST_STARTING;
 
     lvec_header_t head;
@@ -94,11 +52,75 @@ void test_lvec_get_segment() {
     TEST_PASSED;
 }
 
+void test_lvec_get_slots_count(void) {
+    TEST_STARTING;
+    lvec_header_t *v;
+    
+    v = lvec_create(24, 1, false);
+    assert(v);
+    assert(64*1 == lvec_get_slots_count(v));
+    lvec_free(v);
+
+    v = lvec_create(24, 2, false);
+    assert(v);
+    assert(64*2 == lvec_get_slots_count(v));
+    lvec_free(v);
+
+    v = lvec_create(24, 3, false);
+    assert(v);
+    assert(64*3 == lvec_get_slots_count(v));
+    lvec_free(v);
+
+    TEST_PASSED;
+}
+
+
+void test_lvec_get_segment_ix_from_slot_ix(void) {
+    TEST_STARTING;
+    for(int i = 0; i < 64; i++) 
+        assert(lvec_get_segment_ix_from_slot_ix(i) == 0);
+    for(int i = 64; i < 128; i++) 
+        assert(lvec_get_segment_ix_from_slot_ix(i) == 1);
+    for(int i = 128; i < 192; i++) 
+        assert(lvec_get_segment_ix_from_slot_ix(i) == 2);
+    for(int i = 192; i < 256; i++) 
+        assert(lvec_get_segment_ix_from_slot_ix(i) == 3);
+    for(int i = 256; i < 320; i++) 
+        assert(lvec_get_segment_ix_from_slot_ix(i) == 4);
+    for(int i = 320; i < 384; i++) 
+        assert(lvec_get_segment_ix_from_slot_ix(i) == 5);
+    TEST_PASSED;
+}
+
+
+void test_lvec_localize_slot_ix(void) {
+    TEST_STARTING;
+    for(int i=0; i< 10000; i++)
+        assert(lvec_localize_slot_ix(i) >= 0 && lvec_localize_slot_ix(i) < 64);
+
+    for(int i = 0; i < 64; i++) 
+        assert(lvec_localize_slot_ix(i) == i);
+    for(int i = 64; i < 128; i++) 
+        assert(lvec_localize_slot_ix(i) == (i - 64));
+    for(int i = 128; i < 192; i++)
+        assert(lvec_localize_slot_ix(i) == (i - 128));
+    for(int i = 192; i < 256; i++)
+        assert(lvec_localize_slot_ix(i) == (i - 192));
+    for(int i = 256; i < 320; i++)
+        assert(lvec_localize_slot_ix(i) == (i - 256));
+    for(int i = 320; i < 384; i++)
+        assert(lvec_localize_slot_ix(i) == (i - 320));
+    TEST_PASSED;
+}
+
+
 
 int main() {
-
-    // Test create vector functionality
+    test_lvec_create();
     test_lvec_get_segment();
+    test_lvec_get_slots_count();
+    test_lvec_get_segment_ix_from_slot_ix();
+    test_lvec_localize_slot_ix();
 
 
     return 0;
