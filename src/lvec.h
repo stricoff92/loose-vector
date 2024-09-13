@@ -77,7 +77,7 @@ void* lvec_get_pointer_to_vacant_slot(lvec_header_t **v) {
             + new_segment_count * (sizeof(lvec64_occupancy_bitmap_t) + (*v)->element_width * LVEC_SEGMENT_SIZE);
         void *expanded = realloc(*v, new_size);
         if(expanded == NULL) return NULL;
-        *v = expanded;
+        *v = (lvec_header_t*) expanded;
         memset(
             lvec_get_segment(*v, new_segment_count - 1),
             0,
