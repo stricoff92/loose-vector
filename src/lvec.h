@@ -1,6 +1,6 @@
 
-#ifndef LVEC64_H
-#define LVEC64_H
+#ifndef LVEC_H
+#define LVEC_H
 
 #include <stdbool.h>
 #include <stdint.h>
