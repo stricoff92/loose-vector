@@ -136,6 +136,46 @@ void test_lvec_get_data_ptr(void) {
     TEST_PASSED;
 }
 
+void test_lvec_slot_ix_is_occupied(void) {
+    TEST_STARTING;
+    lvec_header_t *v = lvec_create(sizeof(int), 2, false);
+    assert(v);
+
+    for(int i=0; i<128; i++) {
+        void *ptr = lvec_get_pointer_to_vacant_slot(&v);
+        assert(ptr);
+    }
+    assert(v->element_count == 128);
+    assert(v->segment_count == 2);
+    lvec_segment_t *seg0 = lvec_get_segment(v, 0);
+    lvec_segment_t *seg1 = lvec_get_segment(v, 1);
+    assert(seg0->occupancy_bitmap == 0xFFFFFFFFFFFFFFFF);
+    assert(seg1->occupancy_bitmap == 0xFFFFFFFFFFFFFFFF);
+
+    for(int i=0; i<128; i++) {
+        assert(lvec_slot_ix_is_occupied(v, i));
+    }
+
+
+    assert(lvec_vacate_slot(v, 4));
+    assert(lvec_vacate_slot(v, 15));
+    assert(lvec_vacate_slot(v, 32));
+    assert(lvec_vacate_slot(v, 64));
+    assert(lvec_vacate_slot(v, 85));
+    assert(lvec_vacate_slot(v, 120));
+
+    for(int i=0; i<128; i++) {
+        if(i == 4 || i == 15 || i == 32 || i == 64 || i == 85 || i == 120)
+            assert(!lvec_slot_ix_is_occupied(v, i));
+        else 
+            assert(lvec_slot_ix_is_occupied(v, i));
+    }
+
+
+    lvec_free(v);
+    TEST_PASSED;
+}
+
 
 void test_lvec_get_pointer_to_vacant_slot_empty_vec_1_segment(void) {
     TEST_STARTING;
@@ -527,6 +567,7 @@ int main() {
     test_lvec_get_segment_ix_from_slot_ix();
     test_lvec_localize_slot_ix();
     test_lvec_get_data_ptr();
+    test_lvec_slot_ix_is_occupied();
 
     test_lvec_get_pointer_to_vacant_slot_empty_vec_1_segment();
     test_lvec_get_pointer_to_vacant_slot_empty_vec_2_segments();
