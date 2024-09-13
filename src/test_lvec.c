@@ -114,6 +114,12 @@ void test_lvec_localize_slot_ix(void) {
 }
 
 
+void test_lvec_get_pointer_to_vacant_slot_empty_vec_1_segment(void) {
+    TEST_STARTING;
+    TEST_PASSED;
+
+}
+
 
 int main() {
     test_lvec_create();
@@ -121,6 +127,8 @@ int main() {
     test_lvec_get_slots_count();
     test_lvec_get_segment_ix_from_slot_ix();
     test_lvec_localize_slot_ix();
+
+    test_lvec_get_pointer_to_vacant_slot_empty_vec_1_segment();
 
 
     return 0;
