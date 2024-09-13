@@ -49,24 +49,28 @@ void* lvec_create(uint32_t element_width, uint32_t initial_segment_count, bool h
 
 // Calculate a pointer to a given segment index
 #define lvec_get_segment(head, segment_ix) \
-    (lvec_segment_t*) \
+    ((lvec_segment_t*) \
     ( \
         ((uint8_t*)(head)) \
         + ( \
             (sizeof (lvec_header_t)) \
-            + ((head)->element_width * LVEC_SEGMENT_SIZE * segment_ix) \
-            + (sizeof (lvec64_occupancy_bitmap_t) * segment_ix) \
+            + ((head)->element_width * LVEC_SEGMENT_SIZE * (segment_ix)) \
+            + (sizeof (lvec64_occupancy_bitmap_t) * (segment_ix)) \
         )\
-    )
+    ))
 #define lvec_get_slots_count(v) ((v)->segment_count * LVEC_SEGMENT_SIZE)
 #define lvec_get_segment_ix_from_slot_ix(slot_ix) ((slot_ix) / LVEC_SEGMENT_SIZE)
 #define lvec_localize_slot_ix(slot_ix) ((slot_ix) % LVEC_SEGMENT_SIZE)
 #define lvec_local_slot_ix_is_occupied(seg, slot_ix) ((seg)->occupancy_bitmap & (1ULL << (slot_ix)))
 #define segment_is_full(s) ((s)->occupancy_bitmap == 0xFFFFFFFFFFFFFFFF)
+#define lvec_get_data_ptr(head, slot_ix) (\
+    (lvec_get_segment(head, lvec_get_segment_ix_from_slot_ix(slot_ix))) \
+    ->data + (head)->element_width * lvec_localize_slot_ix(slot_ix) \
+)
 
 
 void* lvec_get_pointer_to_vacant_slot(lvec_header_t **v) {
-    if(lvec_get_slots_count(*v) >= (*v)->element_count){
+    if((*v)->element_count >= lvec_get_slots_count(*v)){
         uint32_t new_segment_count = (*v)->segment_count + 1;
         uint32_t new_size =
             sizeof(lvec_header_t)
@@ -74,6 +78,11 @@ void* lvec_get_pointer_to_vacant_slot(lvec_header_t **v) {
         void *expanded = realloc(*v, new_size);
         if(expanded == NULL) return NULL;
         *v = expanded;
+        memset(
+            lvec_get_segment(*v, new_segment_count - 1),
+            0,
+            (sizeof(lvec64_occupancy_bitmap_t) + (*v)->element_width * LVEC_SEGMENT_SIZE)
+        );
         (*v)->segment_count = new_segment_count;
     }
     for(uint32_t seg_ix = 0; seg_ix < (*v)->segment_count; seg_ix++) {
