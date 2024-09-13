@@ -64,7 +64,7 @@ void* lvec_create(uint32_t element_width, uint32_t initial_segment_count, bool h
 #define lvec_local_slot_ix_is_occupied(seg, slot_ix) ((seg)->occupancy_bitmap & (1ULL << (slot_ix)))
 #define segment_is_full(s) ((s)->occupancy_bitmap == 0xFFFFFFFFFFFFFFFF)
 #define lvec_get_data_ptr(head, slot_ix) (\
-    (lvec_get_segment(head, lvec_get_segment_ix_from_slot_ix(slot_ix))) \
+    (lvec_get_segment((head), lvec_get_segment_ix_from_slot_ix(slot_ix))) \
     ->data + (head)->element_width * lvec_localize_slot_ix(slot_ix) \
 )
 
