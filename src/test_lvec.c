@@ -486,7 +486,7 @@ void test_lvec_cannot_vacate_slot_that_is_out_of_bounds(void) {
     assert(v->segment_count == 1);
     assert(v->element_count == 5);
 
-    assert(!lvec_vacate_slot(v, 66));
+    assert(!lvec_vacate_slot(v, 66)); // no segment 2 exists.
     assert(v->segment_count == 1);
     assert(v->element_count == 5);
 
@@ -498,6 +498,22 @@ void test_lvec_cannot_vacate_slot_that_is_unoccupied(void) {
     TEST_STARTING;
     lvec_header_t  *v = lvec_create(sizeof(int), 1, false);
     assert(v);
+
+    assert(lvec_get_pointer_to_vacant_slot(&v));
+    assert(lvec_get_pointer_to_vacant_slot(&v));
+    assert(lvec_get_pointer_to_vacant_slot(&v));
+    assert(lvec_get_pointer_to_vacant_slot(&v));
+    assert(lvec_get_pointer_to_vacant_slot(&v));
+    assert(v->segment_count == 1);
+    assert(v->element_count == 5);
+
+    assert(!lvec_vacate_slot(v, 5)); // unoccupied slot
+    assert(v->segment_count == 1);
+    assert(v->element_count == 5);
+
+    assert(lvec_vacate_slot(v, 4));
+    assert(v->segment_count == 1);
+    assert(v->element_count == 4);
 
     lvec_free(v);
     TEST_PASSED;
