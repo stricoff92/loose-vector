@@ -1,6 +1,6 @@
 
-#ifndef LVEC_H
-#define LVEC_H
+#ifndef lv_LVEC_H
+#define lv_LVEC_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -11,26 +11,26 @@
 #define LVEC_SEGMENT_SIZE 64
 
 
-typedef uint64_t lvec64_occupancy_bitmap_t;
+typedef uint64_t lv_LVEC64_Occupancy_Bitmap;
 
-typedef struct lvec_header_t {
+typedef struct {
     uint32_t element_width;
     uint32_t element_count;
     uint32_t segment_count;
     bool     hard_delete_slots;
-} lvec_header_t; 
+} lv_LVEC_Header;
 
-typedef struct lvec_segment_t {
-    lvec64_occupancy_bitmap_t occupancy_bitmap;
+typedef struct {
+    lv_LVEC64_Occupancy_Bitmap occupancy_bitmap;
     uint8_t data[ ];
-} lvec_segment_t;
+} lv_LVEC_Segment;
 
 
 void* lvec_create(uint32_t element_width, uint32_t initial_segment_count, bool hard_delete_slots) {
-    lvec_header_t *ptr = (lvec_header_t*) calloc(1,
-        sizeof(lvec_header_t)
+    lv_LVEC_Header *ptr = (lv_LVEC_Header*) calloc(1,
+        sizeof(lv_LVEC_Header)
         + (
-            sizeof (lvec64_occupancy_bitmap_t)
+            sizeof (lv_LVEC64_Occupancy_Bitmap)
             + (element_width * LVEC_SEGMENT_SIZE)
         ) * initial_segment_count
     );
@@ -49,13 +49,13 @@ void* lvec_create(uint32_t element_width, uint32_t initial_segment_count, bool h
 
 // Calculate a pointer to a given segment index
 #define lvec_get_segment(head, segment_ix) \
-    ((lvec_segment_t*) \
+    ((lv_LVEC_Segment*) \
     ( \
         ((uint8_t*)(head)) \
         + ( \
-            (sizeof (lvec_header_t)) \
+            (sizeof (lv_LVEC_Header)) \
             + ((head)->element_width * LVEC_SEGMENT_SIZE * (segment_ix)) \
-            + (sizeof (lvec64_occupancy_bitmap_t) * (segment_ix)) \
+            + (sizeof (lv_LVEC64_Occupancy_Bitmap) * (segment_ix)) \
         )\
     ))
 #define lvec_get_slots_count(v) ((v)->segment_count * LVEC_SEGMENT_SIZE)
@@ -74,24 +74,24 @@ void* lvec_create(uint32_t element_width, uint32_t initial_segment_count, bool h
     ) \
 )
 
-void* lvec_get_pointer_to_vacant_slot(lvec_header_t **v) {
+void* lvec_get_pointer_to_vacant_slot(lv_LVEC_Header **v) {
     if((*v)->element_count >= lvec_get_slots_count(*v)){
         uint32_t new_segment_count = (*v)->segment_count + 1;
         uint32_t new_size =
-            sizeof(lvec_header_t)
-            + new_segment_count * (sizeof(lvec64_occupancy_bitmap_t) + (*v)->element_width * LVEC_SEGMENT_SIZE);
+            sizeof(lv_LVEC_Header)
+            + new_segment_count * (sizeof(lv_LVEC64_Occupancy_Bitmap) + (*v)->element_width * LVEC_SEGMENT_SIZE);
         void *expanded = realloc(*v, new_size);
         if(expanded == NULL) return NULL;
-        *v = (lvec_header_t*) expanded;
+        *v = (lv_LVEC_Header*) expanded;
         memset(
             lvec_get_segment(*v, new_segment_count - 1),
             0,
-            (sizeof(lvec64_occupancy_bitmap_t) + (*v)->element_width * LVEC_SEGMENT_SIZE)
+            (sizeof(lv_LVEC64_Occupancy_Bitmap) + (*v)->element_width * LVEC_SEGMENT_SIZE)
         );
         (*v)->segment_count = new_segment_count;
     }
     for(uint32_t seg_ix = 0; seg_ix < (*v)->segment_count; seg_ix++) {
-        lvec_segment_t *seg = lvec_get_segment(*v, seg_ix);
+        lv_LVEC_Segment *seg = lvec_get_segment(*v, seg_ix);
         if(segment_is_full(seg)) continue;
         uint32_t new_localized_index = __builtin_ffsll(~seg->occupancy_bitmap) - 1;
         seg->occupancy_bitmap |= (1ULL << new_localized_index);
@@ -102,10 +102,10 @@ void* lvec_get_pointer_to_vacant_slot(lvec_header_t **v) {
 }
 
 
-bool lvec_vacate_slot(lvec_header_t *v, uint32_t slot_ix) {
+bool lvec_vacate_slot(lv_LVEC_Header *v, uint32_t slot_ix) {
     if(slot_ix >= lvec_get_slots_count(v))
         return false;
-    lvec_segment_t *seg = lvec_get_segment(v, lvec_get_segment_ix_from_slot_ix(slot_ix));
+    lv_LVEC_Segment *seg = lvec_get_segment(v, lvec_get_segment_ix_from_slot_ix(slot_ix));
     uint32_t localized_slot_ix = lvec_localize_slot_ix(slot_ix);
     if(!lvec_local_slot_ix_is_occupied(seg, localized_slot_ix))
         return false;
@@ -113,8 +113,44 @@ bool lvec_vacate_slot(lvec_header_t *v, uint32_t slot_ix) {
     seg->occupancy_bitmap &= ~(1ULL << localized_slot_ix);
     v->element_count--;
 
-    if(v->hard_delete_slots) 
+    if(v->hard_delete_slots)
         memset(seg->data + v->element_width * localized_slot_ix, 0, v->element_width);
+    return true;
+}
+
+// Iterator
+
+typedef struct lv_LVEC_Iter {
+    lv_LVEC_Header *head;
+    lv_LVEC_Segment *seg;
+    uint32_t seg_ix;
+    uint8_t *element;
+    uint8_t local_slot_ix_cursor;
+} lv_LVEC_Iter;
+
+
+lv_LVEC_Iter lvec_create_iter(lv_LVEC_Header *head) {
+    lv_LVEC_Iter iter;
+    iter.head = head;
+    iter.seg = (lv_LVEC_Segment*) (((uint8_t*) head) + sizeof (lv_LVEC_Header));
+    iter.seg_ix = 0;
+    iter.element = ((uint8_t*)iter.seg) + sizeof (lv_LVEC64_Occupancy_Bitmap);
+    iter.local_slot_ix_cursor = 0;
+    return iter;
+}
+
+bool lvec_offset_iter_to_next_segment(lv_LVEC_Iter *iter) {
+    if(iter->seg_ix == (iter->head->segment_count - 1))
+        return false;
+
+    iter->local_slot_ix_cursor = 0;
+    iter->seg = (lv_LVEC_Segment*) (
+        ((uint8_t*) iter->seg)
+            + sizeof(lv_LVEC64_Occupancy_Bitmap)
+            + iter->head->element_width * LVEC_SEGMENT_SIZE
+    );
+    iter->element = ((uint8_t*)iter->seg) + sizeof (lv_LVEC64_Occupancy_Bitmap);
+    iter->seg_ix++;
     return true;
 }
 

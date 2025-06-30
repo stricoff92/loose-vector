@@ -14,7 +14,7 @@ Deleting items causes the vector to become fragmented. Adding new items fills in
 
 <hr>
 
-### lvec64_t
+### lv_LVEC64
 
  - A resizable vector that holds elements of equal width. Data elements are stored in contiguous memory.
  - Max capacity is 64 elements.
@@ -26,7 +26,7 @@ Deleting items causes the vector to become fragmented. Adding new items fills in
 Deleting items causes the vector to become fragmented. Adding new items fills in the gaps.
 
 
-TODO: add a `last_provisioned_index` field to `lvec64_t` and set this to the index of the most recently assigned index.
+TODO: add a `last_provisioned_index` field to `lv_LVEC64` and set this to the index of the most recently assigned index.
 
 Example usage:
 ```c
@@ -39,7 +39,7 @@ typedef struct test_object_t {
 
 
 // create vector that can initially hold 16 objects, and grows 16 at a time.
-lvec64_t *v = lvec64_create(
+lv_LVEC64 *v = lvec64_create(
     sizeof (test_object_t),
     16,
     16

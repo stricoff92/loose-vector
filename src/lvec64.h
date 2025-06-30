@@ -1,7 +1,7 @@
 
 
-#ifndef LVEC64_H
-#define LVEC64_H
+#ifndef lv_LVEC64_H
+#define lv_LVEC64_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -14,17 +14,17 @@
 
 #define lvec64_index_is_occupied(v, i) (v->occupancy_bitmap & (1ULL << i))
 
-typedef struct lvec64_t {
+typedef struct {
     uint32_t element_width;
     uint32_t element_count;
     uint32_t element_count_max;
     uint32_t resize_quantity;
     uint64_t occupancy_bitmap;
     uint8_t  data[ ];
-} lvec64_t;
+} lv_LVEC64;
 
 
-lvec64_t* lvec64_create(
+lv_LVEC64* lvec64_create(
     uint32_t element_width,
     uint32_t initial_max_elements,
     uint32_t resize_quantity
@@ -32,11 +32,11 @@ lvec64_t* lvec64_create(
     if(initial_max_elements > LVEC64_MAX_ELEMENT_COUNT) return NULL;
     void *ptr = calloc(
         1,
-        sizeof(lvec64_t) + (element_width * initial_max_elements)
+        sizeof(lv_LVEC64) + (element_width * initial_max_elements)
     );
     if (ptr == NULL) return NULL;
 
-    lvec64_t *v = (lvec64_t *) ptr;
+    lv_LVEC64 *v = (lv_LVEC64 *) ptr;
     v->element_width = element_width;
     // v->element_count = 0; // calloc already sets this to 0
     v->resize_quantity = resize_quantity;
@@ -49,7 +49,7 @@ lvec64_t* lvec64_create(
 #define lvec64_free(v) free(v)
 
 
-void* lvec64_get_pointer_to_vacant_slot(lvec64_t **v) {
+void* lvec64_get_pointer_to_vacant_slot(lv_LVEC64 **v) {
     if((*v)->element_count >= LVEC64_MAX_ELEMENT_COUNT) return NULL;
 
     if((*v)->element_count < (*v)->element_count_max) {
@@ -67,11 +67,11 @@ void* lvec64_get_pointer_to_vacant_slot(lvec64_t **v) {
 
         void *expanded = realloc(
             *v,
-            sizeof (lvec64_t)
+            sizeof (lv_LVEC64)
             + ((*v)->element_count_max + slots_to_add) * (*v)->element_width
         );
         if(expanded == NULL) return NULL;
-        (*v) = (lvec64_t*) expanded;
+        (*v) = (lv_LVEC64*) expanded;
         memset(
             (*v)->data + ((*v)->element_width * (*v)->element_count_max),
             0,
@@ -82,7 +82,7 @@ void* lvec64_get_pointer_to_vacant_slot(lvec64_t **v) {
     }
 }
 
-bool lvec64_vacate_slot(lvec64_t *v, uint32_t index) {
+bool lvec64_vacate_slot(lv_LVEC64 *v, uint32_t index) {
     if(
         (index >= LVEC64_MAX_ELEMENT_COUNT)
         || (index >= v->element_count_max)

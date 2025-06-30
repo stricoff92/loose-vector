@@ -62,7 +62,7 @@ static inline uint32_t super_fast_hash (const char *data, int len) {
 // End of Fast hash function implementation
 
 
-#define hash_lvec64(v) super_fast_hash((char*) v, sizeof(lvec64_t) + v->element_width * v->element_count_max)
+#define hash_lvec64(v) super_fast_hash((char*) v, sizeof(lv_LVEC64) + v->element_width * v->element_count_max)
 
 
 #define TEST_STARTING printf("running test %s ", __func__)
@@ -71,7 +71,7 @@ static inline uint32_t super_fast_hash (const char *data, int len) {
 // TEST CRETE VECTOR
 void test_lvec64_create() {
     TEST_STARTING;
-    lvec64_t *v = lvec64_create(8, 16, 24);
+    lv_LVEC64 *v = lvec64_create(8, 16, 24);
     assert(v != NULL);
     assert(v->element_count == 0);
     assert(v->element_width == 8);
@@ -86,7 +86,7 @@ void test_newly_crated_lvec64_has_data_set_to_zeros() {
     TEST_STARTING;
     uint32_t element_width = 8;
     uint32_t initial_max_elements = 16;
-    lvec64_t *v = lvec64_create(element_width, initial_max_elements, 24);
+    lv_LVEC64 *v = lvec64_create(element_width, initial_max_elements, 24);
     assert(v != NULL);
     assert(v->element_width == 8);
     assert(v->element_count_max == 16);
@@ -104,7 +104,7 @@ void test_cannot_create_vector_with_initial_size_greater_than_LVEC64_MAX_ELEMENT
     TEST_STARTING;
     uint32_t element_width = 8;
     uint32_t initial_max_elements = LVEC64_MAX_ELEMENT_COUNT + 1;
-    lvec64_t *v = lvec64_create(8, initial_max_elements, 24);
+    lv_LVEC64 *v = lvec64_create(8, initial_max_elements, 24);
     assert(v == NULL);
     TEST_PASSED;
 }
@@ -113,7 +113,7 @@ void test_can_create_vector_with_initial_size_equal_to_LVEC64_MAX_ELEMENT_COUNT(
     TEST_STARTING;
     uint32_t element_width = 8;
     uint32_t initial_max_elements = LVEC64_MAX_ELEMENT_COUNT;
-    lvec64_t *v = lvec64_create(8, initial_max_elements, 24);
+    lv_LVEC64 *v = lvec64_create(8, initial_max_elements, 24);
     assert(v != NULL);
     assert(v->element_count_max == LVEC64_MAX_ELEMENT_COUNT);
     TEST_PASSED;
@@ -125,7 +125,7 @@ void test_pointers_can_be_allocated_to_an_empty_vector() {
     TEST_STARTING;
     uint32_t element_width = 8;
     uint32_t initial_max_elements = 16;
-    lvec64_t *v = lvec64_create(element_width, initial_max_elements, 24);
+    lv_LVEC64 *v = lvec64_create(element_width, initial_max_elements, 24);
     assert(v != NULL);
     void *ptr;
     ptr = lvec64_get_pointer_to_vacant_slot(&v);
@@ -153,7 +153,7 @@ void test_pointers_can_be_allocated_to_a_vector_with_gaps(){
     TEST_STARTING;
     uint32_t element_width = 8;
     uint32_t initial_max_elements = 16;
-    lvec64_t *v = lvec64_create(element_width, initial_max_elements, 24);
+    lv_LVEC64 *v = lvec64_create(element_width, initial_max_elements, 24);
     assert(v != NULL);
     assert(lvec64_get_pointer_to_vacant_slot(&v) != NULL);
     assert(lvec64_get_pointer_to_vacant_slot(&v) != NULL);
@@ -201,7 +201,7 @@ void test_the_vector_can_be_expanded_when_a_pointer_is_allocated_to_a_full_vecto
     uint32_t element_width = 8;
     uint32_t initial_max_elements = 16;
     uint32_t resize_quantity = 24;
-    lvec64_t *v = lvec64_create(element_width, initial_max_elements, resize_quantity);
+    lv_LVEC64 *v = lvec64_create(element_width, initial_max_elements, resize_quantity);
     assert(v != NULL);
     for(int i = 0; i < 16; i++)
         assert(lvec64_get_pointer_to_vacant_slot(&v) != NULL);
@@ -243,7 +243,7 @@ void test_pointers_can_be_allocated_to_a_vector_that_is_at_capacity_and_can_be_e
     uint32_t element_width = 24;
     uint32_t initial_max_elements = 30;
     uint32_t resize_quantity = 30;
-    lvec64_t *v = lvec64_create(element_width, initial_max_elements, resize_quantity);
+    lv_LVEC64 *v = lvec64_create(element_width, initial_max_elements, resize_quantity);
     assert(v != NULL);
     uint64_t expected_bitmap = 0ULL;
     for(uint64_t i = 0; i < 30; i++) {
@@ -268,7 +268,7 @@ void test_pointers_cannot_be_allocated_to_a_vector_that_is_at_capacity_and_canno
     uint32_t element_width = 24;
     uint32_t initial_max_elements = 8;
     uint32_t resize_quantity = 8;
-    lvec64_t *v = lvec64_create(element_width, initial_max_elements, resize_quantity);
+    lv_LVEC64 *v = lvec64_create(element_width, initial_max_elements, resize_quantity);
     assert(v != NULL);
     uint64_t expected_bitmap = 0ULL;
     for(uint64_t i = 0; i < LVEC64_MAX_ELEMENT_COUNT; i++) {
@@ -291,7 +291,7 @@ void test_newly_allocated_memory_regions_are_zeroed_out() {
     uint32_t element_width = 4;
     uint32_t initial_max_elements = 2;
     uint32_t resize_quantity = 2;
-    lvec64_t *v = lvec64_create(element_width, initial_max_elements, resize_quantity);
+    lv_LVEC64 *v = lvec64_create(element_width, initial_max_elements, resize_quantity);
     assert(v != NULL);
     float *ptr;
     ptr = lvec64_get_pointer_to_vacant_slot(&v);
@@ -406,7 +406,7 @@ void test_can_vacate_slot_that_is_filled() {
     uint32_t element_width = 8;
     uint32_t element_count_max = 16;
     uint32_t resize_quantity = 12;
-    lvec64_t *v = lvec64_create(element_width, element_count_max, resize_quantity);
+    lv_LVEC64 *v = lvec64_create(element_width, element_count_max, resize_quantity);
     assert(v != NULL);
     void *ptr;
     ptr = lvec64_get_pointer_to_vacant_slot(&v);
@@ -433,7 +433,7 @@ void test_cannot_vacate_slot_that_is_outside_range_of_vector() {
     uint32_t element_width = 8;
     uint32_t element_count_max = 16;
     uint32_t resize_quantity = 12;
-    lvec64_t *v = lvec64_create(element_width, element_count_max, resize_quantity);
+    lv_LVEC64 *v = lvec64_create(element_width, element_count_max, resize_quantity);
     assert(v != NULL);
 
     uint32_t control_hash = hash_lvec64(v);
@@ -452,7 +452,7 @@ void test_vacating_slot_that_is_in_range_but_unoccupied_has_no_effect() {
     uint32_t element_width = 8;
     uint32_t element_count_max = 16;
     uint32_t resize_quantity = 12;
-    lvec64_t *v = lvec64_create(element_width, element_count_max, resize_quantity);
+    lv_LVEC64 *v = lvec64_create(element_width, element_count_max, resize_quantity);
     assert(v != NULL);
     float val = 12345.67;
     float *ptr;
@@ -478,7 +478,7 @@ void test_vacating_slot_zeros_out_memory_and_doesnt_change_adjacent_slots() {
     uint32_t element_width = 4;
     uint32_t element_count_max = 16;
     uint32_t resize_quantity = 12;
-    lvec64_t *v = lvec64_create(element_width, element_count_max, resize_quantity);
+    lv_LVEC64 *v = lvec64_create(element_width, element_count_max, resize_quantity);
     assert(v != NULL);
     float val = 12345.67;
     float *ptr;
@@ -629,7 +629,7 @@ void test_lvec64_index_is_occupied_macro() {
     uint32_t element_width = 8;
     uint32_t element_count_max = 16;
     uint32_t resize_quantity = 12;
-    lvec64_t *v = lvec64_create(element_width, element_count_max, resize_quantity);
+    lv_LVEC64 *v = lvec64_create(element_width, element_count_max, resize_quantity);
     assert(v != NULL);
     void *ptr;
     ptr = lvec64_get_pointer_to_vacant_slot(&v);

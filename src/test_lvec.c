@@ -16,7 +16,7 @@
 void test_lvec_create(void) {
     TEST_STARTING;
 
-    lvec_header_t *v = lvec_create(24, 2, false);
+    lv_LVEC_Header *v = lvec_create(24, 2, false);
     assert(v != NULL);
     assert(v->element_width == 24);
     assert(v->segment_count == 2);
@@ -29,23 +29,23 @@ void test_lvec_create(void) {
 void test_lvec_get_segment(void) {
     TEST_STARTING;
 
-    lvec_header_t head;
+    lv_LVEC_Header head;
     head.element_width = 24;
-    lvec_header_t *ptr = &head;
-    
-    lvec_segment_t *seg;
-    
+    lv_LVEC_Header *ptr = &head;
+
+    lv_LVEC_Segment *seg;
+
     // Test the first segment = head_ptr + sizeof head
     seg = lvec_get_segment(ptr, 0);
     assert(
-        (((uint8_t*)ptr) + sizeof(lvec_header_t))
+        (((uint8_t*)ptr) + sizeof(lv_LVEC_Header))
         == (uint8_t*)seg
     );
     // Test getting ptr to arbitrary segments.
     for(int i = 0; i < 10000; i++) {
         seg = lvec_get_segment(ptr, i);
         assert(
-            (((uint8_t*)ptr) + sizeof(lvec_header_t) + head.element_width*LVEC_SEGMENT_SIZE*i + sizeof(lvec64_occupancy_bitmap_t)*i)
+            (((uint8_t*)ptr) + sizeof(lv_LVEC_Header) + head.element_width*LVEC_SEGMENT_SIZE*i + sizeof(lv_LVEC64_Occupancy_Bitmap)*i)
             == (uint8_t*)seg
         );
     }
@@ -54,8 +54,8 @@ void test_lvec_get_segment(void) {
 
 void test_lvec_get_slots_count(void) {
     TEST_STARTING;
-    lvec_header_t *v;
-    
+    lv_LVEC_Header *v;
+
     v = lvec_create(24, 1, false);
     assert(v);
     assert(64*1 == lvec_get_slots_count(v));
@@ -77,17 +77,17 @@ void test_lvec_get_slots_count(void) {
 
 void test_lvec_get_segment_ix_from_slot_ix(void) {
     TEST_STARTING;
-    for(int i = 0; i < 64; i++) 
+    for(int i = 0; i < 64; i++)
         assert(lvec_get_segment_ix_from_slot_ix(i) == 0);
-    for(int i = 64; i < 128; i++) 
+    for(int i = 64; i < 128; i++)
         assert(lvec_get_segment_ix_from_slot_ix(i) == 1);
-    for(int i = 128; i < 192; i++) 
+    for(int i = 128; i < 192; i++)
         assert(lvec_get_segment_ix_from_slot_ix(i) == 2);
-    for(int i = 192; i < 256; i++) 
+    for(int i = 192; i < 256; i++)
         assert(lvec_get_segment_ix_from_slot_ix(i) == 3);
-    for(int i = 256; i < 320; i++) 
+    for(int i = 256; i < 320; i++)
         assert(lvec_get_segment_ix_from_slot_ix(i) == 4);
-    for(int i = 320; i < 384; i++) 
+    for(int i = 320; i < 384; i++)
         assert(lvec_get_segment_ix_from_slot_ix(i) == 5);
     TEST_PASSED;
 }
@@ -98,9 +98,9 @@ void test_lvec_localize_slot_ix(void) {
     for(int i=0; i< 10000; i++)
         assert(lvec_localize_slot_ix(i) >= 0 && lvec_localize_slot_ix(i) < 64);
 
-    for(int i = 0; i < 64; i++) 
+    for(int i = 0; i < 64; i++)
         assert(lvec_localize_slot_ix(i) == i);
-    for(int i = 64; i < 128; i++) 
+    for(int i = 64; i < 128; i++)
         assert(lvec_localize_slot_ix(i) == (i - 64));
     for(int i = 128; i < 192; i++)
         assert(lvec_localize_slot_ix(i) == (i - 128));
@@ -115,17 +115,17 @@ void test_lvec_localize_slot_ix(void) {
 
 void test_lvec_get_data_ptr(void) {
     TEST_STARTING;
-    lvec_header_t *v = lvec_create(sizeof(int), 1, false);
+    lv_LVEC_Header *v = lvec_create(sizeof(int), 1, false);
     assert(v);
 
-    lvec_segment_t *seg0 = lvec_get_segment(v, 0);
+    lv_LVEC_Segment *seg0 = lvec_get_segment(v, 0);
     for(int i=0; i<64; i++ ){
         uint8_t* ptr = lvec_get_data_ptr(v, i);
         assert(ptr);
         assert(ptr == seg0->data + i*sizeof(int));
     }
 
-    lvec_segment_t *seg1 = lvec_get_segment(v, 1);
+    lv_LVEC_Segment *seg1 = lvec_get_segment(v, 1);
     for(int i=64; i<127; i++ ){
         uint8_t* ptr = lvec_get_data_ptr(v, i);
         assert(ptr);
@@ -138,7 +138,7 @@ void test_lvec_get_data_ptr(void) {
 
 void test_lvec_slot_ix_is_occupied(void) {
     TEST_STARTING;
-    lvec_header_t *v = lvec_create(sizeof(int), 2, false);
+    lv_LVEC_Header *v = lvec_create(sizeof(int), 2, false);
     assert(v);
 
     for(int i=0; i<128; i++) {
@@ -147,8 +147,8 @@ void test_lvec_slot_ix_is_occupied(void) {
     }
     assert(v->element_count == 128);
     assert(v->segment_count == 2);
-    lvec_segment_t *seg0 = lvec_get_segment(v, 0);
-    lvec_segment_t *seg1 = lvec_get_segment(v, 1);
+    lv_LVEC_Segment *seg0 = lvec_get_segment(v, 0);
+    lv_LVEC_Segment *seg1 = lvec_get_segment(v, 1);
     assert(seg0->occupancy_bitmap == 0xFFFFFFFFFFFFFFFF);
     assert(seg1->occupancy_bitmap == 0xFFFFFFFFFFFFFFFF);
 
@@ -167,7 +167,7 @@ void test_lvec_slot_ix_is_occupied(void) {
     for(int i=0; i<128; i++) {
         if(i == 4 || i == 15 || i == 32 || i == 64 || i == 85 || i == 120)
             assert(!lvec_slot_ix_is_occupied(v, i));
-        else 
+        else
             assert(lvec_slot_ix_is_occupied(v, i));
     }
 
@@ -179,9 +179,9 @@ void test_lvec_slot_ix_is_occupied(void) {
 
 void test_lvec_get_pointer_to_vacant_slot_empty_vec_1_segment(void) {
     TEST_STARTING;
-    lvec_header_t *v = lvec_create(sizeof(int), 1, false);
+    lv_LVEC_Header *v = lvec_create(sizeof(int), 1, false);
     assert(v);
-    lvec_segment_t *seg = lvec_get_segment(v, 0);
+    lv_LVEC_Segment *seg = lvec_get_segment(v, 0);
     uint64_t expected_occupancy_map = 0;
     for(int i=0; i<64; i++) {
         uint8_t *ptr = lvec_get_pointer_to_vacant_slot(&v);
@@ -198,10 +198,10 @@ void test_lvec_get_pointer_to_vacant_slot_empty_vec_1_segment(void) {
 
 void test_lvec_get_pointer_to_vacant_slot_empty_vec_2_segments(void) {
     TEST_STARTING;
-    lvec_header_t  *v = lvec_create(sizeof(int), 2, false);
+    lv_LVEC_Header  *v = lvec_create(sizeof(int), 2, false);
     assert(v);
-    lvec_segment_t *seg0 = lvec_get_segment(v, 0);
-    lvec_segment_t *seg1 = lvec_get_segment(v, 1);
+    lv_LVEC_Segment *seg0 = lvec_get_segment(v, 0);
+    lv_LVEC_Segment *seg1 = lvec_get_segment(v, 1);
     uint64_t expected_occupancy_map = 0;
     for(int i=0; i<64; i++) {
         uint8_t *ptr = lvec_get_pointer_to_vacant_slot(&v);
@@ -234,9 +234,9 @@ void test_lvec_get_pointer_to_vacant_slot_empty_vec_2_segments(void) {
 
 void test_lvec_get_pointer_to_vacant_slot_empty_vec_1_segment_expands_to_2(void) {
     TEST_STARTING;
-    lvec_header_t  *v = lvec_create(sizeof(int), 1, false);
+    lv_LVEC_Header  *v = lvec_create(sizeof(int), 1, false);
     assert(v);
-    lvec_segment_t *seg0 = lvec_get_segment(v, 0);
+    lv_LVEC_Segment *seg0 = lvec_get_segment(v, 0);
     uint64_t expected_occupancy_map = 0;
     for(int i=0; i<64; i++) {
         uint8_t *ptr = lvec_get_pointer_to_vacant_slot(&v);
@@ -257,7 +257,7 @@ void test_lvec_get_pointer_to_vacant_slot_empty_vec_1_segment_expands_to_2(void)
         assert(v->element_count == i+1);
         assert(lvec_get_data_ptr(v, i) == ptr);
         expected_occupancy_map |= 1ULL << (uint64_t)i;
-        lvec_segment_t *seg1 = lvec_get_segment(v, 1);
+        lv_LVEC_Segment *seg1 = lvec_get_segment(v, 1);
         assert(seg0->occupancy_bitmap == 0xFFFFFFFFFFFFFFFF);
         assert(seg1->occupancy_bitmap == expected_occupancy_map);
     }
@@ -277,10 +277,10 @@ void test_lvec_read_data_from_segment(void) {
     int vals[128];
     for(int i=0; i<128; i++) vals[i] = rand() % 10000000;
 
-    lvec_header_t  *v = lvec_create(sizeof(int), 2, false);
+    lv_LVEC_Header  *v = lvec_create(sizeof(int), 2, false);
     assert(v);
-    lvec_segment_t *seg0 = lvec_get_segment(v, 0);
-    lvec_segment_t *seg1 = lvec_get_segment(v, 1);
+    lv_LVEC_Segment *seg0 = lvec_get_segment(v, 0);
+    lv_LVEC_Segment *seg1 = lvec_get_segment(v, 1);
     uint64_t expected_occupancy_map = 0;
     for(int i=0; i<128; i++) {
         int *ptr = lvec_get_pointer_to_vacant_slot(&v);
@@ -303,9 +303,9 @@ void test_lvec_read_data_from_segment(void) {
 void test_lvec_vacate_slots_from_only_segment(void) {
     TEST_STARTING;
 
-    lvec_header_t  *v = lvec_create(sizeof(int), 1, false);
+    lv_LVEC_Header  *v = lvec_create(sizeof(int), 1, false);
     assert(v);
-    lvec_segment_t *seg0 = lvec_get_segment(v, 0);
+    lv_LVEC_Segment *seg0 = lvec_get_segment(v, 0);
 
     void *ptr1 = lvec_get_pointer_to_vacant_slot(&v);
     assert(ptr1);
@@ -349,7 +349,7 @@ void test_lvec_vacate_slots_from_only_segment(void) {
 void test_lvec_vacate_slots_from_multiple_segments(void) {
     TEST_STARTING;
 
-    lvec_header_t  *v = lvec_create(sizeof(int), 1, false);
+    lv_LVEC_Header  *v = lvec_create(sizeof(int), 1, false);
     assert(v);
 
     for(int i=0; i<128; i++) {
@@ -358,8 +358,8 @@ void test_lvec_vacate_slots_from_multiple_segments(void) {
     }
     assert(v->element_count == 128);
     assert(v->segment_count == 2);
-    lvec_segment_t *seg0 = lvec_get_segment(v, 0);
-    lvec_segment_t *seg1 = lvec_get_segment(v, 1);
+    lv_LVEC_Segment *seg0 = lvec_get_segment(v, 0);
+    lv_LVEC_Segment *seg1 = lvec_get_segment(v, 1);
     assert(seg0->occupancy_bitmap == 0xFFFFFFFFFFFFFFFF);
     assert(seg1->occupancy_bitmap == 0xFFFFFFFFFFFFFFFF);
 
@@ -378,9 +378,9 @@ void test_lvec_vacate_slots_from_multiple_segments(void) {
 void test_lvec_get_ptr_to_single_segment_vacant_with_gaps(void) {
     TEST_STARTING;
 
-    lvec_header_t  *v = lvec_create(sizeof(int), 1, false);
+    lv_LVEC_Header  *v = lvec_create(sizeof(int), 1, false);
     assert(v);
-    lvec_segment_t *seg0 = lvec_get_segment(v, 0);
+    lv_LVEC_Segment *seg0 = lvec_get_segment(v, 0);
 
     void *ptr1 = lvec_get_pointer_to_vacant_slot(&v);
     assert(ptr1);
@@ -470,7 +470,7 @@ void test_lvec_get_ptr_to_single_segment_vacant_with_gaps(void) {
 void test_lvec_get_ptr_to_multisegment_vacant_with_gaps(void) {
     TEST_STARTING;
 
-    lvec_header_t  *v = lvec_create(sizeof(int), 1, false);
+    lv_LVEC_Header  *v = lvec_create(sizeof(int), 1, false);
     assert(v);
 
     for(int i=0; i<128; i++) {
@@ -487,7 +487,7 @@ void test_lvec_get_ptr_to_multisegment_vacant_with_gaps(void) {
     assert(lvec_vacate_slot(v, 101));
     assert(v->segment_count == 2);
     assert(v->element_count == 124);
-    
+
     void *ptr1 = lvec_get_pointer_to_vacant_slot(&v);
     assert(ptr1);
     assert(ptr1 = lvec_get_data_ptr(v, 12));
@@ -515,7 +515,7 @@ void test_lvec_get_ptr_to_multisegment_vacant_with_gaps(void) {
 
 void test_lvec_cannot_vacate_slot_that_is_out_of_bounds(void) {
     TEST_STARTING;
-    lvec_header_t  *v = lvec_create(sizeof(int), 1, false);
+    lv_LVEC_Header  *v = lvec_create(sizeof(int), 1, false);
     assert(v);
 
     assert(lvec_get_pointer_to_vacant_slot(&v));
@@ -536,7 +536,7 @@ void test_lvec_cannot_vacate_slot_that_is_out_of_bounds(void) {
 
 void test_lvec_cannot_vacate_slot_that_is_unoccupied(void) {
     TEST_STARTING;
-    lvec_header_t  *v = lvec_create(sizeof(int), 1, false);
+    lv_LVEC_Header  *v = lvec_create(sizeof(int), 1, false);
     assert(v);
 
     assert(lvec_get_pointer_to_vacant_slot(&v));
@@ -558,6 +558,47 @@ void test_lvec_cannot_vacate_slot_that_is_unoccupied(void) {
     lvec_free(v);
     TEST_PASSED;
 }
+
+void test_lvec_iter(void) {
+    TEST_STARTING;
+    lv_LVEC_Header  *v = lvec_create(sizeof(int), 4, false);
+    assert(v);
+    lv_LVEC_Iter iter = lvec_create_iter(v);
+    assert(iter.head == v);
+    assert(iter.seg == lvec_get_segment(v, 0));
+    assert(iter.seg_ix == 0);
+    assert(iter.element == lvec_get_data_ptr(v, 0));
+    assert(iter.local_slot_ix_cursor == 0);
+
+    assert(lvec_offset_iter_to_next_segment(&iter));
+    assert(iter.head == v);
+    assert(iter.seg == lvec_get_segment(v, 1));
+    assert(iter.seg_ix == 1);
+    assert(iter.element == lvec_get_data_ptr(v, LVEC_SEGMENT_SIZE * 1));
+    assert(iter.local_slot_ix_cursor == 0);
+
+    assert(lvec_offset_iter_to_next_segment(&iter));
+    assert(iter.head == v);
+    assert(iter.seg == lvec_get_segment(v, 2));
+    assert(iter.seg_ix == 2);
+    assert(iter.element == lvec_get_data_ptr(v, LVEC_SEGMENT_SIZE * 2));
+    assert(iter.local_slot_ix_cursor == 0);
+
+    assert(lvec_offset_iter_to_next_segment(&iter));
+    assert(iter.head == v);
+    assert(iter.seg == lvec_get_segment(v, 3));
+    assert(iter.seg_ix == 3);
+    assert(iter.element == lvec_get_data_ptr(v, LVEC_SEGMENT_SIZE * 3));
+    assert(iter.local_slot_ix_cursor == 0);
+
+    // No more segments left
+    assert(!lvec_offset_iter_to_next_segment(&iter));
+
+    lvec_free(v);
+    TEST_PASSED;
+}
+
+
 
 int main() {
 
@@ -583,6 +624,8 @@ int main() {
 
     test_lvec_cannot_vacate_slot_that_is_out_of_bounds();
     test_lvec_cannot_vacate_slot_that_is_unoccupied();
+
+    test_lvec_iter();
 
     return 0;
 }
